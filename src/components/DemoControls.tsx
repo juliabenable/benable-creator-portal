@@ -14,6 +14,7 @@ const STATUS_OPTIONS: { value: CreatorStatus; label: string }[] = [
 ];
 
 const STEP_LABELS: Record<CampaignStep, string> = {
+  interest_check: 'Interest Check',
   invitation: 'Campaign Invitation',
   product_phase: 'Product / Gift Card',
   order_placed: 'Order Placed',

@@ -28,7 +28,7 @@ const INITIAL_CAMPAIGNS: Campaign[] = [
     description:
       'Create engaging content showcasing our new Summer Glow Collection. We want authentic, creative content that highlights the product benefits and your personal skincare routine.',
     compensationType: 'Gift Card + Product',
-    currentStep: 'invitation',
+    currentStep: 'interest_check',
     requirements: [
       'Create 1 TikTok video (30-60 seconds) showcasing the product',
       'Create 1 Instagram Reel featuring the product in your skincare routine',
@@ -38,7 +38,8 @@ const INITIAL_CAMPAIGNS: Campaign[] = [
     ],
     hashtags: ['#28Lycia', '#SummerGlow', '#SkincareRoutine', '#Ad', '#Gifted'],
     contentDueDate: '2026-03-20',
-    publishDate: '2026-03-25',
+    publishWindowStart: '2026-03-25',
+    publishWindowEnd: '2026-03-31',
     paymentDetails: '$50 gift card + free product (valued at $85)',
     productType: 'gift_card',
     productCode: 'LYCIA-SUMMER-2026-XK9F',
@@ -51,9 +52,16 @@ const INITIAL_CAMPAIGNS: Campaign[] = [
       { id: 'c5', category: 'Video Length', status: 'approved' },
       { id: 'c6', category: 'Content Quality', status: 'approved', note: 'Excellent production quality' },
     ],
+    complianceNotes: 'Overall great content! Just a couple of things to fix — the product needs to be more visible early on and please add the #Ad hashtag. Looking forward to the updated version!',
     publishedLinks: [],
     brandThankYou:
       "Thank you so much for being part of our Summer Glow launch! Your content was amazing and we'd love to work with you again. Keep glowing!",
+    briefSummary: [
+      'Create 1 TikTok + 1 Instagram Reel featuring skincare products',
+      'Free products + $50 gift card compensation',
+      'Content due by March 20, publish window March 25–31',
+    ],
+    requiredPlatforms: ['TikTok', 'Instagram Reel'],
   },
 ];
 
@@ -61,8 +69,8 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
   {
     id: 'notif-1',
     type: 'campaign_invite',
-    title: 'New Campaign Invitation',
-    message: '28 Lycia has invited you to their Summer Glow Collection Launch campaign.',
+    title: 'New Campaign Opportunity',
+    message: '28 Lycia is interested in working with you for their Summer Glow Collection Launch. Are you interested?',
     timestamp: new Date().toISOString(),
     read: false,
     campaignId: 'campaign-1',

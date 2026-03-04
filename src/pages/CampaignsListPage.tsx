@@ -7,6 +7,7 @@ import { BrandAvatar } from '@/components/BrandAvatar';
 import { getStepIndex, type CampaignStep } from '@/types';
 
 const STEP_LABEL: Record<CampaignStep, string> = {
+  interest_check: 'Are you interested?',
   invitation: 'Review & Accept',
   product_phase: 'Product Details',
   order_placed: 'Awaiting Delivery',
@@ -45,7 +46,7 @@ export default function CampaignsListPage() {
         </Card>
       ) : (
         campaigns.map((campaign) => {
-          const progress = ((getStepIndex(campaign.currentStep) + 1) / 5) * 100;
+          const progress = ((getStepIndex(campaign.currentStep) + 1) / 6) * 100;
           return (
             <Card
               key={campaign.id}

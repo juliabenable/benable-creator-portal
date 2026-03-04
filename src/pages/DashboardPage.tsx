@@ -17,12 +17,15 @@ import {
   Bell,
   Heart,
   TrendingUp,
+  ThumbsUp,
+  HelpCircle,
 } from 'lucide-react';
 import { useCreator } from '@/context/CreatorContext';
 import { BrandAvatar } from '@/components/BrandAvatar';
 import { getStepIndex, type CampaignStep } from '@/types';
 
 const STEP_ACTION_MAP: Record<CampaignStep, { label: string; color: string; icon: React.ElementType }> = {
+  interest_check: { label: 'Are you interested?', color: 'bg-purple-500', icon: ThumbsUp },
   invitation: { label: 'Action needed', color: 'bg-amber-500', icon: AlertCircle },
   product_phase: { label: 'Action needed', color: 'bg-amber-500', icon: Gift },
   order_placed: { label: 'Waiting for delivery', color: 'bg-blue-500', icon: Clock },
@@ -49,6 +52,10 @@ export default function DashboardPage() {
   if (creatorStatus === 'not_applied') {
     return <Navigate to="/apply" replace />;
   }
+
+  // Separate interest-check campaigns from active ones
+  const interestCampaigns = campaigns.filter((c) => c.currentStep === 'interest_check' && !c.declined);
+  const activeCampaigns = campaigns.filter((c) => c.currentStep !== 'interest_check' && !c.declined);
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
@@ -87,13 +94,52 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Campaigns */}
+      {/* Interest Check Cards (are you interested?) */}
+      {creatorStatus === 'accepted' && interestCampaigns.length > 0 && (
+        <div>
+          <h3 className="font-semibold text-lg mb-3">New Opportunities</h3>
+          <div className="space-y-3">
+            {interestCampaigns.map((campaign) => (
+              <Card
+                key={campaign.id}
+                className="cursor-pointer border-purple-200 bg-purple-50/50 hover:shadow-md transition-shadow active:scale-[0.99]"
+                onClick={() => navigate(`/campaign/${campaign.id}`)}
+              >
+                <CardContent className="py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <BrandAvatar campaign={campaign} size="sm" />
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground font-medium">
+                          {campaign.brandName}
+                        </p>
+                        <h4 className="font-semibold mt-0.5 truncate">{campaign.title}</h4>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {campaign.description}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge className="bg-purple-500 text-white text-[10px] px-2 py-0.5 border-0 gap-1">
+                            <ThumbsUp className="w-3 h-3" />
+                            Are you interested?
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <ArrowRight className="w-5 h-5 text-purple-400 shrink-0 mt-2" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Active Campaigns */}
       {creatorStatus === 'accepted' && (
         <div>
           <h3 className="font-semibold text-lg mb-3">Your Campaigns</h3>
-          {campaigns.length === 0 ? (
+          {activeCampaigns.length === 0 && interestCampaigns.length === 0 ? (
             <div className="space-y-5">
-              {/* Celebration card */}
               <Card className="border-primary/20">
                 <CardContent className="py-6 text-center">
                   <PartyPopper className="w-12 h-12 text-primary mx-auto mb-3" />
@@ -105,7 +151,6 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              {/* What to Expect walkthrough */}
               <div>
                 <h4 className="font-semibold text-base mb-3">What to Expect</h4>
                 <div className="space-y-3">
@@ -127,18 +172,21 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Notify footer */}
               <div className="flex items-center gap-2 justify-center text-sm text-muted-foreground py-2">
                 <Bell className="w-4 h-4" />
                 <p>We'll notify you when a campaign is ready</p>
               </div>
             </div>
+          ) : activeCampaigns.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No active campaigns yet. Check the opportunities above!
+            </p>
           ) : (
             <div className="space-y-3">
-              {campaigns.map((campaign) => {
+              {activeCampaigns.map((campaign) => {
                 const stepInfo = STEP_ACTION_MAP[campaign.currentStep];
                 const StepIcon = stepInfo.icon;
-                const progress = ((getStepIndex(campaign.currentStep) + 1) / 5) * 100;
+                const progress = ((getStepIndex(campaign.currentStep) + 1) / 6) * 100;
 
                 return (
                   <Card
@@ -243,6 +291,12 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* Help/Contact Footer */}
+      <div className="flex items-center gap-2 justify-center text-xs text-muted-foreground py-2">
+        <HelpCircle className="w-3.5 h-3.5" />
+        <span>Questions? Email <a href="mailto:collabs@benable.com" className="underline hover:text-foreground">collabs@benable.com</a></span>
+      </div>
     </div>
   );
 }

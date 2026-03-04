@@ -4,6 +4,7 @@ import type { CampaignStep } from '@/types';
 import { ALL_STEPS_ORDERED } from '@/types';
 
 const TIMELINE_LABELS: Record<CampaignStep, string> = {
+  interest_check: 'Showed interest',
   invitation: 'Accepted campaign',
   product_phase: 'Viewed product details',
   order_placed: 'Placed order',

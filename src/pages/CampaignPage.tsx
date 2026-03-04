@@ -6,6 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,14 +55,28 @@ import {
   ChevronDown,
   AlertCircle,
   XCircle,
+  ThumbsUp,
+  ThumbsDown,
+  MapPin,
+  Plus,
+  Trash2,
+  Loader2,
+  Rocket,
+  Image,
+  Trophy,
+  Star,
+  Mail,
+  HelpCircle,
+  MessageSquare,
+  Sparkles,
+  Info,
 } from 'lucide-react';
-import type { Campaign } from '@/types';
+import type { Campaign, ContentLinkEntry } from '@/types';
 
 /* ─── Sticky CTA Wrapper ─── */
 function StickyCTA({ children }: { children: React.ReactNode }) {
   return (
     <>
-      {/* Spacer for mobile so content isn't hidden behind sticky CTA */}
       <div className="h-20 md:hidden" />
       <div className="fixed bottom-16 left-0 right-0 z-30 md:static md:z-auto">
         <div className="bg-gradient-to-t from-background via-background to-transparent pt-4 pb-4 px-4 md:p-0 md:bg-none">
@@ -87,6 +109,16 @@ function ContentLinkPreview({ platform, url }: { platform: string; url: string }
   );
 }
 
+/* ─── Help/Contact Footer ─── */
+function HelpFooter() {
+  return (
+    <div className="flex items-center gap-2 justify-center text-xs text-muted-foreground py-3 mt-2">
+      <HelpCircle className="w-3.5 h-3.5" />
+      <span>Questions? Email <a href="mailto:collabs@benable.com" className="underline hover:text-foreground">collabs@benable.com</a></span>
+    </div>
+  );
+}
+
 export default function CampaignPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -99,6 +131,18 @@ export default function CampaignPage() {
     return (
       <div className="max-w-lg mx-auto px-4 py-10 text-center">
         <p className="text-muted-foreground">Campaign not found.</p>
+        <Button variant="outline" className="mt-4" onClick={() => navigate('/')}>
+          Go Home
+        </Button>
+      </div>
+    );
+  }
+
+  // Don't show full page for declined campaigns
+  if (campaign.declined) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-10 text-center">
+        <p className="text-muted-foreground">You've declined this campaign opportunity.</p>
         <Button variant="outline" className="mt-4" onClick={() => navigate('/')}>
           Go Home
         </Button>
@@ -128,36 +172,40 @@ export default function CampaignPage() {
         </div>
       </div>
 
-      {/* Step Indicator */}
-      <Card className="py-4">
-        <CardContent>
-          <StepIndicator currentStep={campaign.currentStep} />
-        </CardContent>
-      </Card>
-
-      {/* Collapsible Timeline */}
-      <Collapsible open={timelineOpen} onOpenChange={setTimelineOpen}>
-        <Card>
-          <CollapsibleTrigger asChild>
-            <button className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors rounded-xl">
-              <span>Campaign Timeline</span>
-              <ChevronDown
-                className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${
-                  timelineOpen ? 'rotate-180' : ''
-                }`}
-              />
-            </button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="px-5 pb-4">
-              <CampaignTimeline
-                currentStep={campaign.currentStep}
-                stepTimestamps={campaign.stepTimestamps}
-              />
-            </div>
-          </CollapsibleContent>
+      {/* Step Indicator — hide for interest_check */}
+      {campaign.currentStep !== 'interest_check' && (
+        <Card className="py-4">
+          <CardContent>
+            <StepIndicator currentStep={campaign.currentStep} />
+          </CardContent>
         </Card>
-      </Collapsible>
+      )}
+
+      {/* Collapsible Timeline — hide for interest_check */}
+      {campaign.currentStep !== 'interest_check' && (
+        <Collapsible open={timelineOpen} onOpenChange={setTimelineOpen}>
+          <Card>
+            <CollapsibleTrigger asChild>
+              <button className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors rounded-xl">
+                <span>Campaign Timeline</span>
+                <ChevronDown
+                  className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${
+                    timelineOpen ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-5 pb-4">
+                <CampaignTimeline
+                  currentStep={campaign.currentStep}
+                  stepTimestamps={campaign.stepTimestamps}
+                />
+              </div>
+            </CollapsibleContent>
+          </Card>
+        </Collapsible>
+      )}
 
       {/* Dynamic Step Content with Animation */}
       <div
@@ -166,12 +214,16 @@ export default function CampaignPage() {
       >
         <StepContent campaign={campaign} />
       </div>
+
+      <HelpFooter />
     </div>
   );
 }
 
 function StepContent({ campaign }: { campaign: Campaign }) {
   switch (campaign.currentStep) {
+    case 'interest_check':
+      return <InterestCheckStep campaign={campaign} />;
     case 'invitation':
       return <InvitationStep campaign={campaign} />;
     case 'product_phase':
@@ -195,13 +247,131 @@ function StepContent({ campaign }: { campaign: Campaign }) {
 
 type StepProps = { campaign: Campaign };
 
-/* ─── Step: Campaign Invitation ─── */
+/* ─── Step: Interest Check (Are you interested?) ─── */
+function InterestCheckStep({ campaign }: StepProps) {
+  const { setCampaignStep, updateCampaignField } = useCreator();
+  const [showDecline, setShowDecline] = useState(false);
+  const [declineReason, setDeclineReason] = useState('');
+
+  return (
+    <div className="space-y-4">
+      {/* Interest Banner */}
+      <Card className="border-primary/20 bg-primary/5">
+        <CardContent className="py-5 text-center">
+          <Sparkles className="w-10 h-10 text-primary mx-auto mb-3" />
+          <h3 className="font-semibold text-lg">New Campaign Opportunity</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            {campaign.brandName} is interested in working with you!
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Campaign Overview */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Campaign Overview</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">{campaign.description}</p>
+
+          <Separator />
+
+          {/* Brief summary bullet points */}
+          <div className="space-y-2">
+            {campaign.briefSummary.map((point, i) => (
+              <div key={i} className="flex items-start gap-2 text-sm">
+                <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                <span>{point}</span>
+              </div>
+            ))}
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-primary shrink-0" />
+            <div>
+              <p className="text-xs text-muted-foreground">Compensation</p>
+              <p className="text-sm font-medium">{campaign.paymentDetails}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Accept / Decline Actions */}
+      {!showDecline ? (
+        <div className="space-y-3">
+          <Button
+            className="w-full h-12 text-base font-semibold"
+            onClick={() => {
+              setCampaignStep(campaign.id, 'invitation');
+              toast.success("Great! Review the full campaign brief to accept.");
+            }}
+          >
+            <ThumbsUp className="w-5 h-5 mr-2" />
+            I'm Interested
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full h-12 text-base"
+            onClick={() => setShowDecline(true)}
+          >
+            <ThumbsDown className="w-5 h-5 mr-2" />
+            Not This Time
+          </Button>
+        </div>
+      ) : (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">No problem! Help us understand why</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-xs text-muted-foreground">
+              Please let us know why this campaign isn't a fit. This helps us send you better
+              matches in the future. Consider me for future campaigns.
+            </p>
+            <Textarea
+              placeholder="e.g. Not available during this timeframe, doesn't align with my content, already have a competing partnership..."
+              value={declineReason}
+              onChange={(e) => setDeclineReason(e.target.value)}
+              rows={3}
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setShowDecline(false)}
+              >
+                Go Back
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                disabled={!declineReason.trim()}
+                onClick={() => {
+                  updateCampaignField(campaign.id, {
+                    declined: true,
+                    declineReason: declineReason,
+                  });
+                  toast('Campaign declined. We\'ll find you a better match!');
+                }}
+              >
+                Decline Campaign
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+/* ─── Step: Campaign Invitation (Full Brief) ─── */
 function InvitationStep({ campaign }: StepProps) {
   const { setCampaignStep } = useCreator();
 
   return (
     <div className="space-y-4">
-      {/* Action Banner */}
       <Card className="border-amber-200 bg-amber-50">
         <CardContent className="py-4">
           <div className="flex items-center gap-2 mb-2">
@@ -209,12 +379,11 @@ function InvitationStep({ campaign }: StepProps) {
             <span className="font-semibold text-amber-900 text-sm">Action Required</span>
           </div>
           <p className="text-sm text-amber-800">
-            Review the campaign brief below and accept to participate.
+            Review the full campaign brief below and accept to participate.
           </p>
         </CardContent>
       </Card>
 
-      {/* Campaign Overview */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Campaign Brief</CardTitle>
@@ -242,8 +411,8 @@ function InvitationStep({ campaign }: StepProps) {
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-primary shrink-0" />
               <div>
-                <p className="text-xs text-muted-foreground">Publish Date</p>
-                <p className="text-sm font-medium">{campaign.publishDate}</p>
+                <p className="text-xs text-muted-foreground">Publish Window</p>
+                <p className="text-sm font-medium">{campaign.publishWindowStart} — {campaign.publishWindowEnd}</p>
               </div>
             </div>
           </div>
@@ -276,7 +445,6 @@ function InvitationStep({ campaign }: StepProps) {
         </CardContent>
       </Card>
 
-      {/* Accept Section with Confirmation Dialog */}
       <Card className="border-primary/20">
         <CardContent className="py-4 space-y-3">
           <div className="flex items-start gap-2">
@@ -302,8 +470,9 @@ function InvitationStep({ campaign }: StepProps) {
                 <AlertDialogTitle>Accept Campaign Commitment</AlertDialogTitle>
                 <AlertDialogDescription>
                   By accepting, you commit to delivering content as described in the campaign brief
-                  by <strong>{campaign.contentDueDate}</strong> and publishing on{' '}
-                  <strong>{campaign.publishDate}</strong>. This is a binding agreement with{' '}
+                  by <strong>{campaign.contentDueDate}</strong> and publishing between{' '}
+                  <strong>{campaign.publishWindowStart}</strong> and{' '}
+                  <strong>{campaign.publishWindowEnd}</strong>. This is a binding agreement with{' '}
                   {campaign.brandName}.
                 </AlertDialogDescription>
               </AlertDialogHeader>
@@ -326,10 +495,11 @@ function InvitationStep({ campaign }: StepProps) {
   );
 }
 
-/* ─── Step: Product Phase ─── */
+/* ─── Step: Product Phase (with address confirm + checkout instructions) ─── */
 function ProductPhaseStep({ campaign }: StepProps) {
   const { setCampaignStep, updateCampaignField } = useCreator();
   const [confirmationNumber, setConfirmationNumber] = useState('');
+  const [addressConfirmed, setAddressConfirmed] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -340,11 +510,51 @@ function ProductPhaseStep({ campaign }: StepProps) {
             <span className="font-semibold text-amber-900 text-sm">Action Required</span>
           </div>
           <p className="text-sm text-amber-800">
-            Use your product code to place your order, then enter your confirmation number below.
+            Confirm your shipping address, then use your product code to place your order.
           </p>
         </CardContent>
       </Card>
 
+      {/* Confirm Shipping Address */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-primary" />
+            Confirm Your Shipping Address
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Please confirm your address is correct so the brand can send you the product. Update
+            it below if anything has changed.
+          </p>
+          <div className="bg-muted rounded-lg p-3 space-y-1 text-sm">
+            <p className="font-medium">123 Main St</p>
+            <p className="text-muted-foreground">New York, NY 10001</p>
+            <p className="text-muted-foreground">United States</p>
+          </div>
+          {!addressConfirmed ? (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setAddressConfirmed(true);
+                toast.success('Address confirmed!');
+              }}
+            >
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Confirm Address
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-primary">
+              <CheckCircle2 className="w-4 h-4" />
+              <span className="font-medium">Address confirmed</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Product Code + Checkout Instructions */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
@@ -369,6 +579,16 @@ function ProductPhaseStep({ campaign }: StepProps) {
             </div>
           )}
 
+          {/* Checkout instructions */}
+          <div className="flex items-start gap-2.5 p-3 bg-blue-50 rounded-lg">
+            <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+            <p className="text-xs text-blue-700">
+              Use this product code at checkout on the brand's website. Add products to your
+              cart, enter the code in the promo/gift code field, and complete your order as
+              normal.
+            </p>
+          </div>
+
           {campaign.productOptions && campaign.productOptions.length > 0 && (
             <div className="space-y-2">
               <p className="text-sm font-medium">Choose your product:</p>
@@ -386,15 +606,14 @@ function ProductPhaseStep({ campaign }: StepProps) {
 
           <Separator />
 
-          <div>
+          <div className="space-y-1.5">
             <Label>Order Confirmation Number</Label>
             <Input
               placeholder="e.g. ORD-123456"
               value={confirmationNumber}
               onChange={(e) => setConfirmationNumber(e.target.value)}
-              className="mt-1"
             />
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground">
               Enter the confirmation number you received after placing your order.
             </p>
           </div>
@@ -481,7 +700,7 @@ function OrderPlacedStep({ campaign }: StepProps) {
         steps={[
           'Create your content per the brief',
           'Submit content for review',
-          'Publish on your scheduled date',
+          'Publish during your window',
         ]}
       />
     </div>
@@ -506,7 +725,6 @@ function OrderReceivedStep({ campaign }: StepProps) {
         </CardContent>
       </Card>
 
-      {/* Quick Requirements Reminder */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Content Requirements Reminder</CardTitle>
@@ -569,6 +787,7 @@ function CampaignBriefCollapsible({ campaign }: StepProps) {
         <CollapsibleContent>
           <CardContent className="space-y-3 pt-0">
             <Separator />
+            <p className="text-sm text-muted-foreground">{campaign.description}</p>
             <ul className="space-y-1.5">
               {campaign.requirements.map((req, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -588,6 +807,10 @@ function CampaignBriefCollapsible({ campaign }: StepProps) {
               <Calendar className="w-4 h-4 text-primary shrink-0" />
               Content due: <strong>{campaign.contentDueDate}</strong>
             </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="w-4 h-4 text-primary shrink-0" />
+              Publish window: <strong>{campaign.publishWindowStart} — {campaign.publishWindowEnd}</strong>
+            </div>
           </CardContent>
         </CollapsibleContent>
       </Card>
@@ -595,11 +818,59 @@ function CampaignBriefCollapsible({ campaign }: StepProps) {
   );
 }
 
-/* ─── Step: Content Upload ─── */
+/* ─── Step: Content Upload (Dynamic links + AI pre-check) ─── */
 function ContentUploadStep({ campaign }: StepProps) {
   const { setCampaignStep, updateCampaignField } = useCreator();
-  const [tiktokUrl, setTiktokUrl] = useState('');
-  const [instagramUrl, setInstagramUrl] = useState('');
+  const [links, setLinks] = useState<ContentLinkEntry[]>(
+    campaign.requiredPlatforms.map((p, i) => ({
+      id: `link-${i}`,
+      platform: p,
+      type: 'link' as const,
+      url: '',
+    }))
+  );
+  const [checking, setChecking] = useState(false);
+  const [preCheckResults, setPreCheckResults] = useState<{ label: string; ok: boolean }[] | null>(null);
+
+  function addLink() {
+    setLinks((prev) => [...prev, {
+      id: `link-${Date.now()}`,
+      platform: 'TikTok',
+      type: 'link',
+      url: '',
+    }]);
+  }
+
+  function removeLink(id: string) {
+    if (links.length <= 1) return;
+    setLinks((prev) => prev.filter((l) => l.id !== id));
+  }
+
+  function updateLink(id: string, field: keyof ContentLinkEntry, value: string) {
+    setLinks((prev) => prev.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
+  }
+
+  function runPreCheck() {
+    setChecking(true);
+    setPreCheckResults(null);
+    // Simulate AI pre-check (3 seconds)
+    setTimeout(() => {
+      const hasLinks = links.some((l) => l.url.trim());
+      setPreCheckResults([
+        { label: 'Brand tag @28Lycia in caption', ok: true },
+        { label: `Hashtag #Ad included`, ok: false },
+        { label: `Hashtag #28Lycia included`, ok: true },
+        { label: 'Content link provided', ok: hasLinks },
+      ]);
+      setChecking(false);
+    }, 2500);
+  }
+
+  function handleSubmit() {
+    updateCampaignField(campaign.id, { contentSubmissions: links.filter((l) => l.url) });
+    setCampaignStep(campaign.id, 'content_review');
+    toast.success('Content submitted for review!');
+  }
 
   return (
     <div className="space-y-4">
@@ -632,57 +903,131 @@ function ContentUploadStep({ campaign }: StepProps) {
       {/* Collapsible brief for reference */}
       <CampaignBriefCollapsible campaign={campaign} />
 
+      {/* Dynamic Content Links */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Submit Your Content</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Share links to your draft content (unlisted or private links are fine).
+            Share links to your draft content (unlisted or private links are fine). For Instagram
+            Stories, you can upload screenshots instead.
           </p>
-          <div>
-            <Label>TikTok Video Link</Label>
-            <Input
-              placeholder="https://www.tiktok.com/..."
-              value={tiktokUrl}
-              onChange={(e) => setTiktokUrl(e.target.value)}
-            />
-          </div>
-          {tiktokUrl && <ContentLinkPreview platform="TikTok" url={tiktokUrl} />}
 
-          <div>
-            <Label>Instagram Reel Link</Label>
-            <Input
-              placeholder="https://www.instagram.com/..."
-              value={instagramUrl}
-              onChange={(e) => setInstagramUrl(e.target.value)}
-            />
-          </div>
-          {instagramUrl && <ContentLinkPreview platform="Instagram" url={instagramUrl} />}
+          {links.map((link, idx) => (
+            <div key={link.id} className="border rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <Badge variant="secondary" className="text-xs">Link {idx + 1}</Badge>
+                {links.length > 1 && (
+                  <button onClick={() => removeLink(link.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                <div className="col-span-2">
+                  <Select value={link.platform} onValueChange={(v) => updateLink(link.id, 'platform', v)}>
+                    <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="TikTok">TikTok</SelectItem>
+                      <SelectItem value="Instagram Reel">IG Reel</SelectItem>
+                      <SelectItem value="Instagram Story">IG Story</SelectItem>
+                      <SelectItem value="Instagram Carousel">IG Carousel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-3">
+                  {link.platform === 'Instagram Story' ? (
+                    <div className="flex items-center gap-2 h-9 px-3 border rounded-md bg-muted/50 text-sm text-muted-foreground cursor-pointer">
+                      <Image className="w-4 h-4" />
+                      <span>Upload screenshots</span>
+                    </div>
+                  ) : (
+                    <Input
+                      placeholder="Paste link..."
+                      value={link.url}
+                      onChange={(e) => updateLink(link.id, 'url', e.target.value)}
+                      className="h-9"
+                    />
+                  )}
+                </div>
+              </div>
+              {link.url && link.platform !== 'Instagram Story' && (
+                <ContentLinkPreview platform={link.platform} url={link.url} />
+              )}
+            </div>
+          ))}
+
+          <Button type="button" variant="outline" size="sm" className="w-full" onClick={addLink}>
+            <Plus className="w-4 h-4 mr-1" />
+            Add Another Link
+          </Button>
         </CardContent>
       </Card>
 
+      {/* AI Pre-Check */}
+      {preCheckResults && (
+        <Card className="border-blue-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-blue-600" />
+              Quick Compliance Check
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {preCheckResults.map((result, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm">
+                {result.ok ? (
+                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                ) : (
+                  <XCircle className="w-4 h-4 text-red-500" />
+                )}
+                <span className={result.ok ? '' : 'text-red-600 font-medium'}>
+                  {result.label}
+                </span>
+              </div>
+            ))}
+            {preCheckResults.some((r) => !r.ok) && (
+              <p className="text-xs text-amber-600 mt-2">
+                Some items need attention. You can fix them before submitting, or proceed anyway
+                — the team will review everything.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <StickyCTA>
-        <Button
-          className="w-full h-12 text-base font-semibold"
-          onClick={() => {
-            const submissions = [];
-            if (tiktokUrl) submissions.push({ platform: 'TikTok', url: tiktokUrl });
-            if (instagramUrl) submissions.push({ platform: 'Instagram', url: instagramUrl });
-            updateCampaignField(campaign.id, { contentSubmissions: submissions });
-            setCampaignStep(campaign.id, 'content_review');
-            toast.success('Content submitted for review!');
-          }}
-        >
-          <Send className="w-5 h-5 mr-2" />
-          Submit for Review
-        </Button>
+        {!preCheckResults ? (
+          <Button
+            className="w-full h-12 text-base font-semibold"
+            onClick={runPreCheck}
+            disabled={checking}
+          >
+            {checking ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Checking compliance...
+              </>
+            ) : (
+              <>
+                <ShieldCheck className="w-5 h-5 mr-2" />
+                Check & Submit for Review
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button className="w-full h-12 text-base font-semibold" onClick={handleSubmit}>
+            <Send className="w-5 h-5 mr-2" />
+            Submit for Review
+          </Button>
+        )}
       </StickyCTA>
 
       <UpcomingSteps
         steps={[
-          "We'll review your content",
-          "Once approved, you'll get your publish date",
+          "We'll review your content (1-3 business days)",
+          "Once approved, you'll get your publish window",
           'Post and confirm to complete the campaign',
         ]}
       />
@@ -701,7 +1046,7 @@ function ContentReviewStep({ campaign }: StepProps) {
             <span className="font-semibold text-blue-900 text-sm">Under Review</span>
           </div>
           <p className="text-sm text-blue-800">
-            Your content has been submitted and is being reviewed by the brand. We'll notify you
+            Your content has been submitted and is being reviewed. We'll notify you
             once there's feedback.
           </p>
         </CardContent>
@@ -710,7 +1055,7 @@ function ContentReviewStep({ campaign }: StepProps) {
       <Card>
         <CardContent className="py-6 text-center">
           <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-          <p className="font-medium">Waiting for Brand Review</p>
+          <p className="font-medium">Waiting for Review</p>
           <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
             This usually takes 1-3 business days. We'll send you a notification as soon as the
             review is complete.
@@ -745,13 +1090,12 @@ function ContentReviewStep({ campaign }: StepProps) {
         </Card>
       )}
 
-      {/* Collapsible brief for reference */}
       <CampaignBriefCollapsible campaign={campaign} />
     </div>
   );
 }
 
-/* ─── Step: Compliance Feedback (Structured Checklist) ─── */
+/* ─── Step: Compliance Feedback (Structured Checklist + Notes) ─── */
 function ComplianceFeedbackStep({ campaign }: StepProps) {
   const { setCampaignStep } = useCreator();
   const checklist = campaign.complianceChecklist || [];
@@ -773,6 +1117,23 @@ function ComplianceFeedbackStep({ campaign }: StepProps) {
           </p>
         </CardContent>
       </Card>
+
+      {/* Reviewer Notes */}
+      {campaign.complianceNotes && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-primary" />
+              Reviewer Notes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-muted rounded-lg p-3 text-sm italic">
+              "{campaign.complianceNotes}"
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Needs Attention */}
       {needsAttention.length > 0 && (
@@ -842,6 +1203,9 @@ function ComplianceFeedbackStep({ campaign }: StepProps) {
         </Card>
       )}
 
+      {/* Collapsible brief */}
+      <CampaignBriefCollapsible campaign={campaign} />
+
       <StickyCTA>
         <Button
           className="w-full h-12 text-base font-semibold"
@@ -858,11 +1222,43 @@ function ComplianceFeedbackStep({ campaign }: StepProps) {
   );
 }
 
-/* ─── Step: Content Approved + Publish (Merged Flow) ─── */
+/* ─── Step: Content Approved + Publish (Window Logic + Big CTA) ─── */
 function ContentApprovedStep({ campaign }: StepProps) {
   const { setCampaignStep, updateCampaignField } = useCreator();
-  const [tiktokLink, setTiktokLink] = useState('');
-  const [instagramLink, setInstagramLink] = useState('');
+  const [links, setLinks] = useState<ContentLinkEntry[]>(
+    campaign.requiredPlatforms.map((p, i) => ({
+      id: `pub-${i}`,
+      platform: p,
+      type: 'link' as const,
+      url: '',
+    }))
+  );
+  const [hasPosted, setHasPosted] = useState(false);
+
+  // Determine publish window status
+  const now = new Date();
+  const windowStart = new Date(campaign.publishWindowStart);
+  const windowEnd = new Date(campaign.publishWindowEnd);
+  const isPreWindow = now < windowStart;
+  const isInWindow = now >= windowStart && now <= windowEnd;
+
+  function addLink() {
+    setLinks((prev) => [...prev, {
+      id: `pub-${Date.now()}`,
+      platform: 'TikTok',
+      type: 'link',
+      url: '',
+    }]);
+  }
+
+  function removeLink(id: string) {
+    if (links.length <= 1) return;
+    setLinks((prev) => prev.filter((l) => l.id !== id));
+  }
+
+  function updateLink(id: string, field: keyof ContentLinkEntry, value: string) {
+    setLinks((prev) => prev.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
+  }
 
   return (
     <div className="space-y-4">
@@ -872,107 +1268,197 @@ function ContentApprovedStep({ campaign }: StepProps) {
           <CheckCircle2 className="w-12 h-12 text-primary mx-auto mb-3" />
           <h3 className="font-semibold text-lg">Content Approved!</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Your content has been approved by {campaign.brandName}. Publish on your scheduled date
-            and share the links below.
+            Your content has been approved by {campaign.brandName}.
           </p>
         </CardContent>
       </Card>
 
-      {/* Publish Date */}
-      <Card>
-        <CardContent className="py-4">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-primary shrink-0" />
-            <div>
-              <p className="text-sm font-medium">Publish Date</p>
-              <p className="text-lg font-bold text-primary">{campaign.publishDate}</p>
+      {/* Publish Window Status */}
+      {isPreWindow ? (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="py-5 text-center">
+            <Clock className="w-10 h-10 text-blue-600 mx-auto mb-3" />
+            <h3 className="font-semibold text-blue-900">Publish Window Opens Soon</h3>
+            <p className="text-sm text-blue-700 mt-1">
+              Your publish window opens on <strong>{campaign.publishWindowStart}</strong>.
+              We'll notify you when it's time to post!
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        /* Big "Go Post Now!" CTA when in window */
+        <Card className="border-primary bg-gradient-to-br from-primary/10 to-primary/5">
+          <CardContent className="py-6 text-center">
+            <Rocket className="w-14 h-14 text-primary mx-auto mb-3" />
+            <h3 className="font-bold text-xl">Time to Post!</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Your publish window is open{isInWindow ? ` until ${campaign.publishWindowEnd}` : ''}.
+              Go post your approved content now!
+            </p>
+            <Button
+              size="lg"
+              className="mt-4 h-14 text-lg font-bold px-8"
+              onClick={() => setHasPosted(true)}
+            >
+              <Rocket className="w-6 h-6 mr-2" />
+              I've Posted My Content
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Public Links Input — shown after "I've Posted" or always visible */}
+      {(hasPosted || !isPreWindow) && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Public Post Links</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-start gap-2.5 p-3 bg-amber-50 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700">
+                <strong>This campaign will not be marked as complete until you submit your
+                public post links.</strong> This is a requirement for all campaigns.
+              </p>
             </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Public Links Input */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Public Post Links</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Once you've published, share the public URLs to your posts.
-          </p>
-          <div>
-            <Label>TikTok Post URL</Label>
-            <Input
-              placeholder="https://www.tiktok.com/@you/video/..."
-              value={tiktokLink}
-              onChange={(e) => setTiktokLink(e.target.value)}
-            />
-          </div>
-          {tiktokLink && <ContentLinkPreview platform="TikTok" url={tiktokLink} />}
+            {links.map((link, idx) => (
+              <div key={link.id} className="border rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Badge variant="secondary" className="text-xs">Post {idx + 1}</Badge>
+                  {links.length > 1 && (
+                    <button onClick={() => removeLink(link.id)} className="text-muted-foreground hover:text-destructive transition-colors">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-5 gap-2">
+                  <div className="col-span-2">
+                    <Select value={link.platform} onValueChange={(v) => updateLink(link.id, 'platform', v)}>
+                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="TikTok">TikTok</SelectItem>
+                        <SelectItem value="Instagram Reel">IG Reel</SelectItem>
+                        <SelectItem value="Instagram Story">IG Story</SelectItem>
+                        <SelectItem value="Instagram Carousel">IG Carousel</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-3">
+                    {link.platform === 'Instagram Story' ? (
+                      <div className="flex items-center gap-2 h-9 px-3 border rounded-md bg-muted/50 text-sm text-muted-foreground cursor-pointer">
+                        <Image className="w-4 h-4" />
+                        <span>Upload screenshots</span>
+                      </div>
+                    ) : (
+                      <Input
+                        placeholder="Paste public link..."
+                        value={link.url}
+                        onChange={(e) => updateLink(link.id, 'url', e.target.value)}
+                        className="h-9"
+                      />
+                    )}
+                  </div>
+                </div>
+                {link.url && link.platform !== 'Instagram Story' && (
+                  <ContentLinkPreview platform={link.platform} url={link.url} />
+                )}
+              </div>
+            ))}
 
-          <div>
-            <Label>Instagram Post URL</Label>
-            <Input
-              placeholder="https://www.instagram.com/p/..."
-              value={instagramLink}
-              onChange={(e) => setInstagramLink(e.target.value)}
-            />
-          </div>
-          {instagramLink && <ContentLinkPreview platform="Instagram" url={instagramLink} />}
-        </CardContent>
-      </Card>
+            <Button type="button" variant="outline" size="sm" className="w-full" onClick={addLink}>
+              <Plus className="w-4 h-4 mr-1" />
+              Add Another Post Link
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Complete with Confirmation Dialog */}
-      <StickyCTA>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button className="w-full h-12 text-base font-semibold">
-              <CheckCircle2 className="w-5 h-5 mr-2" />
-              Confirm & Complete Campaign
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Complete Campaign</AlertDialogTitle>
-              <AlertDialogDescription>
-                By confirming, you verify that your content has been published on{' '}
-                <strong>{campaign.publishDate}</strong> and the links provided are the live public
-                posts. This will mark the campaign as complete.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  const links = [];
-                  if (tiktokLink) links.push({ platform: 'TikTok', url: tiktokLink });
-                  if (instagramLink) links.push({ platform: 'Instagram', url: instagramLink });
-                  updateCampaignField(campaign.id, { publishedLinks: links });
-                  setCampaignStep(campaign.id, 'completed');
-                  toast.success('Campaign completed! Thank you!');
-                }}
-              >
-                Confirm & Complete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </StickyCTA>
+      {!isPreWindow && (
+        <StickyCTA>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button className="w-full h-12 text-base font-semibold">
+                <CheckCircle2 className="w-5 h-5 mr-2" />
+                Confirm & Complete Campaign
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Complete Campaign</AlertDialogTitle>
+                <AlertDialogDescription>
+                  By confirming, you verify that your content has been published and the links
+                  provided are the live public posts. This will mark the campaign as complete.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    updateCampaignField(campaign.id, { publishedLinks: links.filter((l) => l.url) });
+                    setCampaignStep(campaign.id, 'completed');
+                    toast.success('Campaign completed! Thank you!');
+                  }}
+                >
+                  Confirm & Complete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </StickyCTA>
+      )}
     </div>
   );
 }
 
-/* ─── Step: Completed ─── */
+/* ─── Step: Completed (Enhanced with Stats) ─── */
 function CompletedStep({ campaign }: StepProps) {
   return (
     <div className="space-y-4">
-      <Card className="border-primary/20 bg-primary/5">
+      {/* Celebration with Stats */}
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
         <CardContent className="py-6 text-center">
           <PartyPopper className="w-14 h-14 text-primary mx-auto mb-3" />
           <h3 className="font-bold text-xl">Campaign Complete!</h3>
           <p className="text-sm text-muted-foreground mt-1">
-            Amazing work! Here's your campaign summary.
+            Amazing work! You crushed this campaign.
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Achievement card */}
+      <Card className="bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200">
+        <CardContent className="py-5">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+              <Trophy className="w-7 h-7 text-amber-600" />
+            </div>
+            <div>
+              <p className="font-bold text-amber-900">Top Performer</p>
+              <p className="text-sm text-amber-700 mt-0.5">
+                You delivered content on time and met all requirements. You're one of our star creators!
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mt-4">
+            <div className="text-center bg-white/60 rounded-lg py-2">
+              <p className="text-lg font-bold text-amber-900">100%</p>
+              <p className="text-[10px] text-amber-700 uppercase">On Time</p>
+            </div>
+            <div className="text-center bg-white/60 rounded-lg py-2">
+              <p className="text-lg font-bold text-amber-900">5/5</p>
+              <p className="text-[10px] text-amber-700 uppercase">Requirements</p>
+            </div>
+            <div className="text-center bg-white/60 rounded-lg py-2">
+              <div className="flex items-center justify-center gap-0.5">
+                {[1, 2, 3, 4, 5].map((s) => (
+                  <Star key={s} className="w-3 h-3 fill-amber-500 text-amber-500" />
+                ))}
+              </div>
+              <p className="text-[10px] text-amber-700 uppercase mt-1">Rating</p>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -980,7 +1466,10 @@ function CompletedStep({ campaign }: StepProps) {
       {campaign.brandThankYou && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Message from {campaign.brandName}</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <Mail className="w-4 h-4 text-primary" />
+              Message from {campaign.brandName}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="bg-muted rounded-lg p-4 italic text-sm">
@@ -1045,3 +1534,4 @@ function UpcomingSteps({ steps }: { steps: string[] }) {
     </Card>
   );
 }
+

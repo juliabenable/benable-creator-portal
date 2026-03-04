@@ -19,7 +19,7 @@ import {
   User,
   MapPin,
   BarChart3,
-  ImagePlus,
+  LinkIcon,
   Plus,
   Trash2,
   Sparkles,
@@ -35,7 +35,9 @@ import { toast } from 'sonner';
 const TOTAL_STEPS = 5;
 const COUNTRIES = ['United States', 'Canada', 'United Kingdom', 'Australia', 'France', 'Germany', 'Brazil', 'Mexico', 'India', 'Japan'];
 const GENDERS = ['Female', 'Male', 'Non-binary', 'Mixed'];
-const AGE_RANGES = ['13-17', '18-24', '25-34', '35-44', '45-54', '55+'];
+
+// Match TikTok & Instagram analytics age brackets
+const AGE_RANGES = ['13-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65+'];
 
 const CONTENT_NICHES = [
   { label: 'Beauty', emoji: '\u{1F484}' },
@@ -61,11 +63,7 @@ const AVAILABILITY_OPTIONS = [
 interface PostEntry {
   id: string;
   platform: string;
-  description: string;
-  views: string;
-  likes: string;
-  comments: string;
-  shares: string;
+  link: string;
 }
 
 export default function ApplyPage() {
@@ -79,8 +77,11 @@ export default function ApplyPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [availability, setAvailability] = useState('');
 
+  // Start with 3 post slots as requested
   const [posts, setPosts] = useState<PostEntry[]>([
-    { id: '1', platform: 'tiktok', description: '', views: '', likes: '', comments: '', shares: '' },
+    { id: '1', platform: 'tiktok', link: '' },
+    { id: '2', platform: 'instagram_reel', link: '' },
+    { id: '3', platform: 'instagram_carousel', link: '' },
   ]);
 
   if (creatorStatus !== 'not_applied') {
@@ -94,12 +95,17 @@ export default function ApplyPage() {
   function addPost() {
     setPosts((prev) => [
       ...prev,
-      { id: Date.now().toString(), platform: 'tiktok', description: '', views: '', likes: '', comments: '', shares: '' },
+      { id: Date.now().toString(), platform: 'tiktok', link: '' },
     ]);
   }
 
   function removePost(id: string) {
+    if (posts.length <= 1) return;
     setPosts((prev) => prev.filter((p) => p.id !== id));
+  }
+
+  function updatePost(id: string, field: keyof PostEntry, value: string) {
+    setPosts((prev) => prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
   }
 
   function handleNext() {
@@ -148,7 +154,12 @@ export default function ApplyPage() {
         {step === 2 && <ShippingStep />}
         {step === 3 && <SocialStatsStep />}
         {step === 4 && (
-          <PastPostsStep posts={posts} addPost={addPost} removePost={removePost} />
+          <PastPostsStep
+            posts={posts}
+            addPost={addPost}
+            removePost={removePost}
+            updatePost={updatePost}
+          />
         )}
       </div>
 
@@ -396,16 +407,33 @@ function SocialStatsStep() {
               <Label>{platform} Handle</Label>
               <Input placeholder={`@your${platform.toLowerCase()}handle`} />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className={`grid ${platform === 'TikTok' ? 'grid-cols-3' : 'grid-cols-2'} gap-3`}>
               <div className="space-y-1.5">
                 <Label>Followers</Label>
                 <Input type="number" placeholder="e.g. 15000" />
               </div>
               <div className="space-y-1.5">
-                <Label>Engagement Rate (%)</Label>
+                <Label>Engagement (%)</Label>
                 <Input type="number" step="0.1" placeholder="e.g. 4.5" />
               </div>
+              {/* TikTok-specific: Avg views per video (more important than followers) */}
+              {platform === 'TikTok' && (
+                <div className="space-y-1.5">
+                  <Label>Avg. Views</Label>
+                  <Input type="number" placeholder="e.g. 5000" />
+                </div>
+              )}
             </div>
+
+            {platform === 'TikTok' && (
+              <div className="flex items-start gap-2.5 p-2.5 bg-blue-50 rounded-lg">
+                <Info className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
+                <p className="text-xs text-blue-700">
+                  Average views per video is a key metric for TikTok — brands care about this even
+                  more than follower count.
+                </p>
+              </div>
+            )}
 
             {/* Demographics */}
             <div className="border-t pt-4 space-y-3">
@@ -490,21 +518,23 @@ function SocialStatsStep() {
   );
 }
 
-/* ─── Step 4: Past Posts ─── */
+/* ─── Step 4: Past Posts (Link-only, 3 slots) ─── */
 function PastPostsStep({
   posts,
   addPost,
   removePost,
+  updatePost,
 }: {
   posts: PostEntry[];
   addPost: () => void;
   removePost: (id: string) => void;
+  updatePost: (id: string, field: keyof PostEntry, value: string) => void;
 }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
-          <ImagePlus className="w-4 h-4 text-primary" />
+          <LinkIcon className="w-4 h-4 text-primary" />
           Past Posts
         </CardTitle>
       </CardHeader>
@@ -512,9 +542,9 @@ function PastPostsStep({
         <div className="flex items-start gap-2.5 p-3 bg-primary/5 rounded-lg">
           <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
           <p className="text-xs text-muted-foreground">
-            Share a few of your best posts so we can see your content style. Try to include a mix
-            of formats — TikTok videos, Instagram Reels, carousels — to show range and diversity
-            in your work.
+            Share links to 3 of your best posts so we can see your content style. Try to include
+            a mix of formats — TikTok videos, Instagram Reels, carousels — to show range and
+            diversity. We'll automatically pull engagement stats from each link.
           </p>
         </div>
         {posts.map((post, idx) => (
@@ -529,7 +559,7 @@ function PastPostsStep({
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Platform</Label>
-              <Select defaultValue={post.platform}>
+              <Select value={post.platform} onValueChange={(v) => updatePost(post.id, 'platform', v)}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="tiktok">TikTok</SelectItem>
@@ -540,23 +570,22 @@ function PastPostsStep({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Post Link or Description</Label>
-              <Input placeholder="Paste link or brief description" className="h-9" />
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {(['Views', 'Likes', 'Comments', 'Shares'] as const).map((label) => (
-                <div key={label} className="space-y-1">
-                  <Label className="text-xs">{label}</Label>
-                  <Input type="number" placeholder="0" className="h-9" />
-                </div>
-              ))}
+              <Label className="text-xs">Post Link *</Label>
+              <Input
+                placeholder="https://www.tiktok.com/... or https://www.instagram.com/..."
+                value={post.link}
+                onChange={(e) => updatePost(post.id, 'link', e.target.value)}
+                className="h-9"
+              />
             </div>
           </div>
         ))}
-        <Button type="button" variant="outline" size="sm" className="w-full" onClick={addPost}>
-          <Plus className="w-4 h-4 mr-1" />
-          Add Another Post
-        </Button>
+        {posts.length < 5 && (
+          <Button type="button" variant="outline" size="sm" className="w-full" onClick={addPost}>
+            <Plus className="w-4 h-4 mr-1" />
+            Add Another Post
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

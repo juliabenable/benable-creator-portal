@@ -1,6 +1,7 @@
 export type CreatorStatus = 'not_applied' | 'pending' | 'accepted' | 'not_accepted';
 
 export type CampaignStep =
+  | 'interest_check'
   | 'invitation'
   | 'product_phase'
   | 'order_placed'
@@ -16,6 +17,7 @@ export interface SocialStats {
   handle: string;
   followers: string;
   engagementRate: string;
+  avgViews?: string; // TikTok-specific: avg views per video
   topCountry: string;
   topGender: string;
   topAgeRange: string;
@@ -23,12 +25,8 @@ export interface SocialStats {
 
 export interface PastPost {
   id: string;
-  platform: 'tiktok' | 'instagram';
-  description: string;
-  views: string;
-  likes: string;
-  comments: string;
-  shares: string;
+  platform: 'tiktok' | 'instagram_reel' | 'instagram_carousel' | 'instagram_story';
+  link: string;
 }
 
 export interface ShippingAddress {
@@ -57,6 +55,13 @@ export interface Notification {
   actionUrl?: string;
 }
 
+export type ContentLinkEntry = {
+  id: string;
+  platform: string;
+  type: 'link' | 'upload';
+  url: string;
+};
+
 export interface Campaign {
   id: string;
   brandName: string;
@@ -68,7 +73,8 @@ export interface Campaign {
   requirements: string[];
   hashtags: string[];
   contentDueDate: string;
-  publishDate: string;
+  publishWindowStart: string;
+  publishWindowEnd: string;
   paymentDetails: string;
   productType: 'gift_card' | 'product_choice';
   productCode?: string;
@@ -76,14 +82,22 @@ export interface Campaign {
   selectedProduct?: string;
   orderConfirmationNumber?: string;
   stepTimestamps?: Record<string, string>;
-  contentSubmissions: { platform: string; url: string }[];
+  contentSubmissions: ContentLinkEntry[];
   complianceFeedback?: string;
   complianceChecklist?: ComplianceItem[];
-  publishedLinks: { platform: string; url: string }[];
+  complianceNotes?: string;
+  publishedLinks: ContentLinkEntry[];
   brandThankYou?: string;
+  declined?: boolean;
+  declineReason?: string;
+  // Brief summary shown during interest check
+  briefSummary: string[];
+  // Platforms required for this campaign
+  requiredPlatforms: string[];
 }
 
 export const CAMPAIGN_STEPS: { key: CampaignStep; label: string }[] = [
+  { key: 'interest_check', label: 'Interest' },
   { key: 'invitation', label: 'Accept' },
   { key: 'product_phase', label: 'Product' },
   { key: 'content_upload', label: 'Content' },
@@ -93,24 +107,27 @@ export const CAMPAIGN_STEPS: { key: CampaignStep; label: string }[] = [
 
 export function getStepIndex(step: CampaignStep): number {
   switch (step) {
-    case 'invitation':
+    case 'interest_check':
       return 0;
+    case 'invitation':
+      return 1;
     case 'product_phase':
     case 'order_placed':
     case 'order_received':
-      return 1;
+      return 2;
     case 'content_upload':
     case 'content_review':
     case 'compliance_feedback':
-      return 2;
-    case 'content_approved':
       return 3;
-    case 'completed':
+    case 'content_approved':
       return 4;
+    case 'completed':
+      return 5;
   }
 }
 
 export const ALL_STEPS_ORDERED: CampaignStep[] = [
+  'interest_check',
   'invitation',
   'product_phase',
   'order_placed',
