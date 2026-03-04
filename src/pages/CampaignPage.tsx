@@ -182,6 +182,8 @@ function StepContent({ campaign }: { campaign: Campaign }) {
       return <OrderReceivedStep campaign={campaign} />;
     case 'content_upload':
       return <ContentUploadStep campaign={campaign} />;
+    case 'content_review':
+      return <ContentReviewStep campaign={campaign} />;
     case 'compliance_feedback':
       return <ComplianceFeedbackStep campaign={campaign} />;
     case 'content_approved':
@@ -544,6 +546,55 @@ function OrderReceivedStep({ campaign }: StepProps) {
   );
 }
 
+/* ─── Collapsible Campaign Brief ─── */
+function CampaignBriefCollapsible({ campaign }: StepProps) {
+  const [briefOpen, setBriefOpen] = useState(false);
+
+  return (
+    <Collapsible open={briefOpen} onOpenChange={setBriefOpen}>
+      <Card>
+        <CollapsibleTrigger asChild>
+          <button className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors rounded-xl">
+            <span className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-primary" />
+              Campaign Brief
+            </span>
+            <ChevronDown
+              className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${
+                briefOpen ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="space-y-3 pt-0">
+            <Separator />
+            <ul className="space-y-1.5">
+              {campaign.requirements.map((req, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  {req}
+                </li>
+              ))}
+            </ul>
+            <div className="flex flex-wrap gap-1.5">
+              {campaign.hashtags.map((tag) => (
+                <Badge key={tag} variant="secondary" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="w-4 h-4 text-primary shrink-0" />
+              Content due: <strong>{campaign.contentDueDate}</strong>
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+}
+
 /* ─── Step: Content Upload ─── */
 function ContentUploadStep({ campaign }: StepProps) {
   const { setCampaignStep, updateCampaignField } = useCreator();
@@ -564,6 +615,22 @@ function ContentUploadStep({ campaign }: StepProps) {
           </p>
         </CardContent>
       </Card>
+
+      {/* DO NOT PUBLISH warning */}
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="py-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-red-800">
+              <strong>Do not publish your content yet.</strong> All content must be reviewed and
+              approved before going live. Submit your draft links below and we'll get back to you.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Collapsible brief for reference */}
+      <CampaignBriefCollapsible campaign={campaign} />
 
       <Card>
         <CardHeader className="pb-3">
@@ -603,7 +670,7 @@ function ContentUploadStep({ campaign }: StepProps) {
             if (tiktokUrl) submissions.push({ platform: 'TikTok', url: tiktokUrl });
             if (instagramUrl) submissions.push({ platform: 'Instagram', url: instagramUrl });
             updateCampaignField(campaign.id, { contentSubmissions: submissions });
-            setCampaignStep(campaign.id, 'compliance_feedback');
+            setCampaignStep(campaign.id, 'content_review');
             toast.success('Content submitted for review!');
           }}
         >
@@ -619,6 +686,67 @@ function ContentUploadStep({ campaign }: StepProps) {
           'Post and confirm to complete the campaign',
         ]}
       />
+    </div>
+  );
+}
+
+/* ─── Step: Waiting for Review ─── */
+function ContentReviewStep({ campaign }: StepProps) {
+  return (
+    <div className="space-y-4">
+      <Card className="border-blue-200 bg-blue-50">
+        <CardContent className="py-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="w-5 h-5 text-blue-600" />
+            <span className="font-semibold text-blue-900 text-sm">Under Review</span>
+          </div>
+          <p className="text-sm text-blue-800">
+            Your content has been submitted and is being reviewed by the brand. We'll notify you
+            once there's feedback.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="py-6 text-center">
+          <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <p className="font-medium">Waiting for Brand Review</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+            This usually takes 1-3 business days. We'll send you a notification as soon as the
+            review is complete.
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* DO NOT PUBLISH reminder */}
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="py-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-red-800">
+              <strong>Do not publish your content yet.</strong> Please wait for approval before
+              posting publicly.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Show submitted links */}
+      {campaign.contentSubmissions.length > 0 && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Submitted Content</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {campaign.contentSubmissions.map((sub, i) => (
+              <ContentLinkPreview key={i} platform={sub.platform} url={sub.url} />
+            ))}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Collapsible brief for reference */}
+      <CampaignBriefCollapsible campaign={campaign} />
     </div>
   );
 }

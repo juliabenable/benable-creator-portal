@@ -15,6 +15,8 @@ import {
   Package,
   Camera,
   Bell,
+  Heart,
+  TrendingUp,
 } from 'lucide-react';
 import { useCreator } from '@/context/CreatorContext';
 import { BrandAvatar } from '@/components/BrandAvatar';
@@ -26,6 +28,7 @@ const STEP_ACTION_MAP: Record<CampaignStep, { label: string; color: string; icon
   order_placed: { label: 'Waiting for delivery', color: 'bg-blue-500', icon: Clock },
   order_received: { label: 'Action needed', color: 'bg-amber-500', icon: Upload },
   content_upload: { label: 'Action needed', color: 'bg-amber-500', icon: Upload },
+  content_review: { label: 'Under review', color: 'bg-blue-500', icon: Clock },
   compliance_feedback: { label: 'Action needed', color: 'bg-red-500', icon: AlertCircle },
   content_approved: { label: 'Ready to publish', color: 'bg-emerald-500', icon: CheckCircle2 },
   completed: { label: 'Completed', color: 'bg-emerald-500', icon: PartyPopper },
@@ -180,6 +183,46 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Not Accepted State */}
+      {creatorStatus === 'not_accepted' && (
+        <div className="space-y-5">
+          <Card className="border-muted">
+            <CardContent className="py-6 text-center">
+              <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <h3 className="font-bold text-lg">Thanks for Applying!</h3>
+              <p className="text-sm text-muted-foreground mt-2 max-w-sm mx-auto">
+                We're growing quickly and spots in our creator program are limited right now.
+                Unfortunately, we're not able to offer a spot at this time — but we'd love to
+                reconsider as the program expands.
+              </p>
+            </CardContent>
+          </Card>
+
+          <div>
+            <h4 className="font-semibold text-base mb-3">Tips to Strengthen Your Profile</h4>
+            <div className="space-y-3">
+              {[
+                { icon: TrendingUp, title: 'Grow your audience', text: 'Keep posting consistently and engaging with your community. A growing, active audience is what brands look for.' },
+                { icon: Camera, title: 'Level up your content', text: 'Focus on high-quality visuals, good lighting, and authentic storytelling that resonates with your niche.' },
+                { icon: Sparkles, title: 'Stay on our radar', text: "We regularly review past applicants as new spots open up. You don't need to re-apply — we'll reach out when the time is right." },
+              ].map((item, i) => (
+                <Card key={i}>
+                  <CardContent className="flex items-start gap-3 py-3">
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <item.icon className="w-4 h-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{item.title}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{item.text}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Next Steps Info (when pending) */}
       {creatorStatus === 'pending' && (
         <div>
@@ -187,8 +230,8 @@ export default function DashboardPage() {
           <div className="space-y-3">
             {[
               { step: '1', text: 'We review your application and social media presence' },
-              { step: '2', text: "Once accepted, you'll get matched with brand campaigns" },
-              { step: '3', text: "You'll receive products, create content, and get compensated" },
+              { step: '2', text: "Once accepted, we'll reach out when a brand campaign is a good fit for your profile. Not every campaign will be a match — we hand-pick creators for each one." },
+              { step: '3', text: "You'll receive products, create content, and get compensated for campaigns you participate in" },
             ].map((item) => (
               <div key={item.step} className="flex items-start gap-3">
                 <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-xs font-semibold text-primary">

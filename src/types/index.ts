@@ -1,4 +1,4 @@
-export type CreatorStatus = 'not_applied' | 'pending' | 'accepted';
+export type CreatorStatus = 'not_applied' | 'pending' | 'accepted' | 'not_accepted';
 
 export type CampaignStep =
   | 'invitation'
@@ -6,6 +6,7 @@ export type CampaignStep =
   | 'order_placed'
   | 'order_received'
   | 'content_upload'
+  | 'content_review'
   | 'compliance_feedback'
   | 'content_approved'
   | 'completed';
@@ -99,6 +100,7 @@ export function getStepIndex(step: CampaignStep): number {
     case 'order_received':
       return 1;
     case 'content_upload':
+    case 'content_review':
     case 'compliance_feedback':
       return 2;
     case 'content_approved':
@@ -114,6 +116,7 @@ export const ALL_STEPS_ORDERED: CampaignStep[] = [
   'order_placed',
   'order_received',
   'content_upload',
+  'content_review',
   'compliance_feedback',
   'content_approved',
   'completed',

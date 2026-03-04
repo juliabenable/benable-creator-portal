@@ -12,6 +12,7 @@ const STEP_LABEL: Record<CampaignStep, string> = {
   order_placed: 'Awaiting Delivery',
   order_received: 'Ready to Create',
   content_upload: 'Upload Content',
+  content_review: 'Under Review',
   compliance_feedback: 'Changes Needed',
   content_approved: 'Approve & Publish',
   completed: 'Completed',

@@ -10,6 +10,7 @@ const STATUS_OPTIONS: { value: CreatorStatus; label: string }[] = [
   { value: 'not_applied', label: 'Not Applied' },
   { value: 'pending', label: 'Pending Review' },
   { value: 'accepted', label: 'Accepted' },
+  { value: 'not_accepted', label: 'Not Accepted' },
 ];
 
 const STEP_LABELS: Record<CampaignStep, string> = {
@@ -18,6 +19,7 @@ const STEP_LABELS: Record<CampaignStep, string> = {
   order_placed: 'Order Placed',
   order_received: 'Order Received',
   content_upload: 'Upload Content',
+  content_review: 'Waiting for Review',
   compliance_feedback: 'Compliance Feedback',
   content_approved: 'Approve & Publish',
   completed: 'Campaign Complete',

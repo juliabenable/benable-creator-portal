@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -28,6 +27,7 @@ import {
   ArrowRight,
   Crown,
   Globe,
+  Info,
 } from 'lucide-react';
 import { useCreator } from '@/context/CreatorContext';
 import { toast } from 'sonner';
@@ -36,8 +36,22 @@ const TOTAL_STEPS = 5;
 const COUNTRIES = ['United States', 'Canada', 'United Kingdom', 'Australia', 'France', 'Germany', 'Brazil', 'Mexico', 'India', 'Japan'];
 const GENDERS = ['Female', 'Male', 'Non-binary', 'Mixed'];
 const AGE_RANGES = ['13-17', '18-24', '25-34', '35-44', '45-54', '55+'];
-const CONTENT_NICHES = ['Beauty', 'Fashion', 'Lifestyle', 'Fitness', 'Food', 'Travel', 'Tech', 'Parenting', 'DIY / Crafts'];
+
+const CONTENT_NICHES = [
+  { label: 'Beauty', emoji: '\u{1F484}' },
+  { label: 'Fashion', emoji: '\u{1F457}' },
+  { label: 'Lifestyle', emoji: '\u{2728}' },
+  { label: 'Fitness', emoji: '\u{1F4AA}' },
+  { label: 'Food', emoji: '\u{1F372}' },
+  { label: 'Travel', emoji: '\u{2708}\u{FE0F}' },
+  { label: 'Tech', emoji: '\u{1F4F1}' },
+  { label: 'Parenting', emoji: '\u{1F476}' },
+  { label: 'DIY / Crafts', emoji: '\u{1F3A8}' },
+  { label: 'Wellness', emoji: '\u{1F9D8}' },
+];
+
 const PRODUCT_CATEGORIES = ['Skincare', 'Makeup', 'Haircare', 'Supplements', 'Clothing', 'Accessories', 'Home', 'Food & Drink'];
+
 const AVAILABILITY_OPTIONS = [
   { value: 'full_time', label: 'Full-time creator' },
   { value: 'part_time', label: 'Part-time / Side hustle' },
@@ -218,22 +232,22 @@ function PersonalInfoStep({
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
             <User className="w-4 h-4 text-primary" />
             About You
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div>
+        <CardContent className="space-y-4">
+          <div className="space-y-1.5">
             <Label htmlFor="name">Full Name *</Label>
             <Input id="name" placeholder="Your name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="email">Email *</Label>
             <Input id="email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label htmlFor="portfolio">Portfolio / Website</Label>
             <Input id="portfolio" placeholder="https://yoursite.com" />
           </div>
@@ -241,19 +255,28 @@ function PersonalInfoStep({
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader>
           <CardTitle className="text-base">Content Niches</CardTitle>
+          <p className="text-xs text-muted-foreground">Select all that apply</p>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-muted-foreground mb-3">Select all that apply</p>
           <div className="grid grid-cols-2 gap-2">
             {CONTENT_NICHES.map((niche) => (
-              <label key={niche} className="flex items-center gap-2 text-sm cursor-pointer">
+              <label
+                key={niche.label}
+                className={`flex items-center gap-2.5 text-sm cursor-pointer rounded-lg border px-3 py-2.5 transition-colors ${
+                  selectedNiches.includes(niche.label)
+                    ? 'border-primary bg-primary/5 font-medium'
+                    : 'border-border hover:border-primary/30'
+                }`}
+              >
                 <Checkbox
-                  checked={selectedNiches.includes(niche)}
-                  onCheckedChange={() => toggleNiche(niche)}
+                  checked={selectedNiches.includes(niche.label)}
+                  onCheckedChange={() => toggleNiche(niche.label)}
+                  className="sr-only"
                 />
-                {niche}
+                <span className="text-base">{niche.emoji}</span>
+                <span>{niche.label}</span>
               </label>
             ))}
           </div>
@@ -261,11 +284,11 @@ function PersonalInfoStep({
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader>
           <CardTitle className="text-base">Preferred Product Categories</CardTitle>
+          <p className="text-xs text-muted-foreground">What products do you love working with?</p>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-muted-foreground mb-3">What products do you love working with?</p>
           <div className="grid grid-cols-2 gap-2">
             {PRODUCT_CATEGORIES.map((cat) => (
               <label key={cat} className="flex items-center gap-2 text-sm cursor-pointer">
@@ -281,7 +304,7 @@ function PersonalInfoStep({
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
+        <CardHeader>
           <CardTitle className="text-base">Availability</CardTitle>
         </CardHeader>
         <CardContent>
@@ -303,34 +326,41 @@ function PersonalInfoStep({
 function ShippingStep() {
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <MapPin className="w-4 h-4 text-primary" />
           Shipping Address
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-xs text-muted-foreground">So brands can send you products to review.</p>
-        <div>
+      <CardContent className="space-y-4">
+        <div className="flex items-start gap-2.5 p-3 bg-primary/5 rounded-lg">
+          <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground">
+            We collect your shipping address so that brands can send you products to review as part
+            of their campaigns. Your address is kept private and only shared with brands you've
+            accepted a campaign with.
+          </p>
+        </div>
+        <div className="space-y-1.5">
           <Label>Street Address</Label>
           <Input placeholder="123 Main St" />
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div>
+          <div className="space-y-1.5">
             <Label>City</Label>
             <Input placeholder="City" />
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label>State / Province</Label>
             <Input placeholder="State" />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <div>
+          <div className="space-y-1.5">
             <Label>ZIP / Postal Code</Label>
             <Input placeholder="ZIP" />
           </div>
-          <div>
+          <div className="space-y-1.5">
             <Label>Country</Label>
             <Select>
               <SelectTrigger>
@@ -355,56 +385,102 @@ function SocialStatsStep() {
     <div className="space-y-4">
       {(['TikTok', 'Instagram'] as const).map((platform) => (
         <Card key={platform}>
-          <CardHeader className="pb-3">
+          <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <BarChart3 className="w-4 h-4 text-primary" />
               {platform} Stats
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
               <Label>{platform} Handle</Label>
               <Input placeholder={`@your${platform.toLowerCase()}handle`} />
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <div>
+              <div className="space-y-1.5">
                 <Label>Followers</Label>
                 <Input type="number" placeholder="e.g. 15000" />
               </div>
-              <div>
+              <div className="space-y-1.5">
                 <Label>Engagement Rate (%)</Label>
                 <Input type="number" step="0.1" placeholder="e.g. 4.5" />
               </div>
             </div>
-            <Separator />
-            <p className="text-xs font-medium text-muted-foreground">Top Audience Demographics</p>
-            <div className="grid grid-cols-3 gap-3">
+
+            {/* Demographics */}
+            <div className="border-t pt-4 space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Audience Demographics
+              </p>
+
+              {/* Top 2 Countries */}
               <div>
-                <Label className="text-xs">Country</Label>
-                <Select>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs mb-1.5 block">Top Countries</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Select>
+                    <SelectTrigger className="h-9"><SelectValue placeholder="1st country" /></SelectTrigger>
+                    <SelectContent>
+                      {COUNTRIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                  <Select>
+                    <SelectTrigger className="h-9"><SelectValue placeholder="2nd country" /></SelectTrigger>
+                    <SelectContent>
+                      {COUNTRIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
+              {/* Gender + Percentage */}
               <div>
-                <Label className="text-xs">Gender</Label>
-                <Select>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                    {GENDERS.map((g) => (<SelectItem key={g} value={g}>{g}</SelectItem>))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs mb-1.5 block">Top Gender</Label>
+                <div className="grid grid-cols-5 gap-2">
+                  <div className="col-span-3">
+                    <Select>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="Gender" /></SelectTrigger>
+                      <SelectContent>
+                        {GENDERS.map((g) => (<SelectItem key={g} value={g}>{g}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="col-span-2">
+                    <Input type="number" placeholder="%" className="h-9" min={0} max={100} />
+                  </div>
+                </div>
               </div>
+
+              {/* Top 2 Age Ranges + Percentages */}
               <div>
-                <Label className="text-xs">Age Range</Label>
-                <Select>
-                  <SelectTrigger className="h-9"><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                    {AGE_RANGES.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
-                  </SelectContent>
-                </Select>
+                <Label className="text-xs mb-1.5 block">Top Age Ranges</Label>
+                <div className="space-y-2">
+                  <div className="grid grid-cols-5 gap-2">
+                    <div className="col-span-3">
+                      <Select>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="1st age range" /></SelectTrigger>
+                        <SelectContent>
+                          {AGE_RANGES.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-2">
+                      <Input type="number" placeholder="%" className="h-9" min={0} max={100} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-5 gap-2">
+                    <div className="col-span-3">
+                      <Select>
+                        <SelectTrigger className="h-9"><SelectValue placeholder="2nd age range" /></SelectTrigger>
+                        <SelectContent>
+                          {AGE_RANGES.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-2">
+                      <Input type="number" placeholder="%" className="h-9" min={0} max={100} />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -426,16 +502,21 @@ function PastPostsStep({
 }) {
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <ImagePlus className="w-4 h-4 text-primary" />
           Past Posts
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-xs text-muted-foreground">
-          Share a few of your best posts so we can see your content style.
-        </p>
+        <div className="flex items-start gap-2.5 p-3 bg-primary/5 rounded-lg">
+          <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground">
+            Share a few of your best posts so we can see your content style. Try to include a mix
+            of formats — TikTok videos, Instagram Reels, carousels — to show range and diversity
+            in your work.
+          </p>
+        </div>
         {posts.map((post, idx) => (
           <div key={post.id} className="border rounded-lg p-3 space-y-3">
             <div className="flex items-center justify-between">
@@ -446,23 +527,25 @@ function PastPostsStep({
                 </button>
               )}
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label className="text-xs">Platform</Label>
               <Select defaultValue={post.platform}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="tiktok">TikTok</SelectItem>
-                  <SelectItem value="instagram">Instagram</SelectItem>
+                  <SelectItem value="instagram_reel">Instagram Reel</SelectItem>
+                  <SelectItem value="instagram_carousel">Instagram Carousel</SelectItem>
+                  <SelectItem value="instagram_story">Instagram Story</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label className="text-xs">Post Description / Link</Label>
-              <Input placeholder="Link or brief description" className="h-9" />
+            <div className="space-y-1.5">
+              <Label className="text-xs">Post Link or Description</Label>
+              <Input placeholder="Paste link or brief description" className="h-9" />
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {(['Views', 'Likes', 'Comments', 'Shares'] as const).map((label) => (
-                <div key={label}>
+                <div key={label} className="space-y-1">
                   <Label className="text-xs">{label}</Label>
                   <Input type="number" placeholder="0" className="h-9" />
                 </div>

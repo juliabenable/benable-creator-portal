@@ -9,6 +9,7 @@ const TIMELINE_LABELS: Record<CampaignStep, string> = {
   order_placed: 'Placed order',
   order_received: 'Received product',
   content_upload: 'Submitted content',
+  content_review: 'Content under review',
   compliance_feedback: 'Received feedback',
   content_approved: 'Content approved & published',
   completed: 'Campaign completed',
