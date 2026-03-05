@@ -839,31 +839,33 @@ function CampaignBriefCollapsible({ campaign }: StepProps) {
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <CardContent className="space-y-3 pt-0">
+          <CardContent className="pt-0">
             <Separator />
-            <p className="text-sm text-muted-foreground">{campaign.description}</p>
-            <ul className="space-y-1.5">
-              {campaign.requirements.map((req, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  {req}
-                </li>
-              ))}
-            </ul>
-            <div className="flex flex-wrap gap-1.5">
-              {campaign.hashtags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4 text-primary shrink-0" />
-              Content due: <strong>{campaign.contentDueDate}</strong>
-            </div>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4 text-primary shrink-0" />
-              Publish window: <strong>{campaign.publishWindowStart} — {campaign.publishWindowEnd}</strong>
+            <div className="max-h-[300px] overflow-y-auto space-y-3 pt-3 pr-1">
+              <p className="text-sm text-muted-foreground">{campaign.description}</p>
+              <ul className="space-y-1.5">
+                {campaign.requirements.map((req, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    {req}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex flex-wrap gap-1.5">
+                {campaign.hashtags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4 text-primary shrink-0" />
+                Content due: <strong>{campaign.contentDueDate}</strong>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4 text-primary shrink-0" />
+                Publish window: <strong>{campaign.publishWindowStart} — {campaign.publishWindowEnd}</strong>
+              </div>
             </div>
           </CardContent>
         </CollapsibleContent>
@@ -1348,7 +1350,6 @@ function ContentApprovedStep({ campaign }: StepProps) {
       url: '',
     }))
   );
-  const [hasPosted, setHasPosted] = useState(false);
 
   // Determine publish window status
   const now = new Date();
@@ -1357,19 +1358,9 @@ function ContentApprovedStep({ campaign }: StepProps) {
   const isPreWindow = now < windowStart;
   const isInWindow = now >= windowStart && now <= windowEnd;
 
-  function addLink() {
-    setLinks((prev) => [...prev, {
-      id: `pub-${Date.now()}`,
-      platform: 'TikTok',
-      type: 'link',
-      url: '',
-    }]);
-  }
-
-  function removeLink(id: string) {
-    if (links.length <= 1) return;
-    setLinks((prev) => prev.filter((l) => l.id !== id));
-  }
+  // All links must have URLs before completing
+  const allLinksFilled = links.every((l) => l.url.trim() !== '');
+  const filledCount = links.filter((l) => l.url.trim() !== '').length;
 
   function updateLink(id: string, field: keyof ContentLinkEntry, value: string) {
     setLinks((prev) => prev.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
@@ -1401,14 +1392,15 @@ function ContentApprovedStep({ campaign }: StepProps) {
           </CardContent>
         </Card>
       ) : (
-        /* Big "Go Post Now!" CTA when in window */
+        /* "Publish your content now" CTA when in window */
         <Card className="border-primary bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="py-6 text-center">
             <Rocket className="w-14 h-14 text-primary mx-auto mb-3" />
-            <h3 className="font-bold text-xl">Time to Post!</h3>
+            <h3 className="font-bold text-xl">Publish Your Content Now</h3>
             <p className="text-sm text-muted-foreground mt-1">
-              Your publish window is open{isInWindow ? ` until ${campaign.publishWindowEnd}` : ''}.
-              Go post your approved content now!
+              {isInWindow
+                ? <>Your publish window is open until <strong>{campaign.publishWindowEnd}</strong>. Post your content and submit the live links below.</>
+                : 'Post your approved content and submit the live links below.'}
             </p>
           </CardContent>
         </Card>
@@ -1421,100 +1413,83 @@ function ContentApprovedStep({ campaign }: StepProps) {
             <CardTitle className="text-base">Submit Your Live Links</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-start gap-2.5 p-3 bg-amber-50 rounded-lg">
-              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-700">
-                <strong>This campaign will not be marked as complete until you submit your
-                live post links.</strong>
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Paste the public link for each piece of content you've published. All links are required
+              to complete the campaign.
+            </p>
 
-            {links.map((link, idx) => (
+            {links.map((link) => (
               <div key={link.id} className="border rounded-lg p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <Badge variant="secondary" className="text-xs">Post {idx + 1}</Badge>
-                  {links.length > 1 && (
-                    <button onClick={() => removeLink(link.id)} className="text-muted-foreground hover:text-destructive transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                <div className="flex items-center gap-2">
+                  <ContentLinkPreview platform={link.platform} url="" />
+                  <span className="text-sm font-medium">{link.platform}</span>
+                  {link.url.trim() ? (
+                    <Badge className="bg-primary text-white text-[10px] px-1.5 py-0 border-0 ml-auto">✓</Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 ml-auto text-muted-foreground">Required</Badge>
                   )}
                 </div>
-                <div className="grid grid-cols-5 gap-2">
-                  <div className="col-span-2">
-                    <Select value={link.platform} onValueChange={(v) => updateLink(link.id, 'platform', v)}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {CONTENT_PLATFORMS.map((p) => (
-                          <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="col-span-3">
-                    <Input
-                      placeholder="Paste public link..."
-                      value={link.url}
-                      onChange={(e) => updateLink(link.id, 'url', e.target.value)}
-                      className="h-9"
-                    />
-                  </div>
-                </div>
+                <Input
+                  placeholder={`Paste your live ${link.platform} link...`}
+                  value={link.url}
+                  onChange={(e) => updateLink(link.id, 'url', e.target.value)}
+                  className="h-9"
+                />
                 {link.url && (
                   <ContentLinkPreview platform={link.platform} url={link.url} />
                 )}
               </div>
             ))}
 
-            <Button type="button" variant="outline" size="sm" className="w-full" onClick={addLink}>
-              <Plus className="w-4 h-4 mr-1" />
-              Add Another Post Link
-            </Button>
+            {/* Progress indicator */}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <div className="flex-1 bg-muted rounded-full h-1.5">
+                <div
+                  className="bg-primary h-full rounded-full transition-all duration-300"
+                  style={{ width: `${(filledCount / links.length) * 100}%` }}
+                />
+              </div>
+              <span>{filledCount}/{links.length} links submitted</span>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* I've published + Confirm & Complete */}
+      {/* Confirm & Complete — requires all links */}
       {!isPreWindow && (
         <StickyCTA>
-          {!hasPosted ? (
-            <Button
-              className="w-full h-12 text-base font-semibold"
-              onClick={() => setHasPosted(true)}
-            >
-              <Rocket className="w-5 h-5 mr-2" />
-              I've Published My Content
-            </Button>
-          ) : (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button className="w-full h-12 text-base font-semibold">
-                  <CheckCircle2 className="w-5 h-5 mr-2" />
-                  Confirm & Complete Campaign
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Complete Campaign</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    By confirming, you verify that your content has been published and the links
-                    provided are the live public posts. This will mark the campaign as complete.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => {
-                      updateCampaignField(campaign.id, { publishedLinks: links.filter((l) => l.url) });
-                      setCampaignStep(campaign.id, 'completed');
-                      toast.success('Campaign completed! Thank you!');
-                    }}
-                  >
-                    Confirm & Complete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                className="w-full h-12 text-base font-semibold"
+                disabled={!allLinksFilled}
+              >
+                <CheckCircle2 className="w-5 h-5 mr-2" />
+                {allLinksFilled ? 'Confirm & Complete Campaign' : `Submit all ${links.length} links to continue`}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Complete Campaign</AlertDialogTitle>
+                <AlertDialogDescription>
+                  By confirming, you verify that your content has been published and the {links.length} links
+                  provided are the live public posts. This will mark the campaign as complete.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    updateCampaignField(campaign.id, { publishedLinks: links.filter((l) => l.url) });
+                    setCampaignStep(campaign.id, 'completed');
+                    toast.success('Campaign completed! Thank you!');
+                  }}
+                >
+                  Confirm & Complete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </StickyCTA>
       )}
     </div>

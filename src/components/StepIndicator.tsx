@@ -6,48 +6,102 @@ interface StepIndicatorProps {
   currentStep: CampaignStep;
 }
 
+// Sub-step progress within each major step (0-1 range)
+function getSubStepProgress(step: CampaignStep): number {
+  switch (step) {
+    case 'order_placed':
+      return 0.33;
+    case 'order_received':
+      return 0.66;
+    case 'content_review':
+      return 0.33;
+    case 'compliance_feedback':
+      return 0.66;
+    default:
+      return 0;
+  }
+}
+
 export function StepIndicator({ currentStep }: StepIndicatorProps) {
   const activeIndex = getStepIndex(currentStep);
+  const subProgress = getSubStepProgress(currentStep);
+  const totalSteps = CAMPAIGN_STEPS.length;
+  // Overall progress: completed steps + current step partial progress
+  const overallProgress = ((activeIndex + subProgress) / totalSteps) * 100;
 
   return (
-    <div className="flex items-center justify-between w-full px-2">
-      {CAMPAIGN_STEPS.map((step, i) => {
-        const isCompleted = i < activeIndex;
-        const isActive = i === activeIndex;
+    <div className="space-y-3">
+      {/* Overall progress bar */}
+      <div className="relative">
+        <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${Math.max(overallProgress, 3)}%` }}
+          />
+        </div>
+        <div className="flex justify-between mt-1">
+          <span className="text-[10px] text-muted-foreground">
+            Step {activeIndex + 1} of {totalSteps}
+          </span>
+          <span className="text-[10px] font-medium text-primary">
+            {Math.round(overallProgress)}%
+          </span>
+        </div>
+      </div>
 
-        return (
-          <div key={step.key} className="flex items-center flex-1 last:flex-none">
-            <div className="flex flex-col items-center gap-1.5">
-              <div
-                className={cn(
-                  'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all shrink-0',
-                  isCompleted && 'bg-primary text-primary-foreground',
-                  isActive && 'bg-primary text-primary-foreground ring-4 ring-primary/20',
-                  !isCompleted && !isActive && 'bg-muted text-muted-foreground'
-                )}
-              >
-                {isCompleted ? <Check className="w-4 h-4" /> : i + 1}
+      {/* Step circles */}
+      <div className="flex items-center justify-between w-full">
+        {CAMPAIGN_STEPS.map((step, i) => {
+          const isCompleted = i < activeIndex;
+          const isActive = i === activeIndex;
+
+          return (
+            <div key={step.key} className="flex items-center flex-1 last:flex-none">
+              <div className="flex flex-col items-center gap-1">
+                <div className="relative">
+                  <div
+                    className={cn(
+                      'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-500 shrink-0',
+                      isCompleted && 'bg-primary text-primary-foreground',
+                      isActive && 'bg-primary text-primary-foreground shadow-md shadow-primary/30',
+                      !isCompleted && !isActive && 'bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {isCompleted ? <Check className="w-4 h-4" /> : i + 1}
+                  </div>
+                  {/* Pulse ring for active step */}
+                  {isActive && (
+                    <div className="absolute inset-0 rounded-full border-2 border-primary/40 animate-ping" style={{ animationDuration: '2s' }} />
+                  )}
+                </div>
+                <span
+                  className={cn(
+                    'text-[10px] font-medium text-center leading-tight whitespace-nowrap',
+                    isActive ? 'text-primary font-semibold' : isCompleted ? 'text-foreground' : 'text-muted-foreground'
+                  )}
+                >
+                  {step.label}
+                </span>
               </div>
-              <span
-                className={cn(
-                  'text-[11px] font-medium text-center leading-tight',
-                  isActive ? 'text-primary' : isCompleted ? 'text-foreground' : 'text-muted-foreground'
-                )}
-              >
-                {step.label}
-              </span>
+              {/* Connector line */}
+              {i < CAMPAIGN_STEPS.length - 1 && (
+                <div className="flex-1 mx-1.5 mt-[-14px]">
+                  <div className="h-0.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        'h-full rounded-full transition-all duration-700',
+                        i < activeIndex ? 'bg-primary w-full' :
+                        i === activeIndex && subProgress > 0 ? 'bg-primary/60' : 'w-0'
+                      )}
+                      style={i === activeIndex && subProgress > 0 ? { width: `${subProgress * 100}%` } : undefined}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-            {i < CAMPAIGN_STEPS.length - 1 && (
-              <div
-                className={cn(
-                  'h-0.5 flex-1 mx-2 mt-[-18px] transition-all',
-                  i < activeIndex ? 'bg-primary' : 'bg-muted'
-                )}
-              />
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
