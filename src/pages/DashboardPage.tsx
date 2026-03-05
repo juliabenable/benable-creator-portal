@@ -40,7 +40,7 @@ const STEP_ACTION_MAP: Record<CampaignStep, { label: string; color: string; icon
 const WHAT_TO_EXPECT = [
   { icon: Handshake, title: 'Brand Match', description: 'Get matched with brands that align with your content style' },
   { icon: FileText, title: 'Campaign Brief', description: 'Receive detailed briefs with requirements and deadlines' },
-  { icon: Package, title: 'Free Products', description: 'Get products shipped to you at no cost' },
+  { icon: Package, title: 'Free Products or Gift Cards', description: 'Get products shipped to you or gift cards for each campaign' },
   { icon: Camera, title: 'Create & Submit', description: 'Create authentic content and submit for brand review' },
   { icon: Gift, title: 'Get Compensated', description: 'Earn gift cards, products, and more for your work' },
 ];
@@ -191,36 +191,37 @@ export default function DashboardPage() {
                 return (
                   <Card
                     key={campaign.id}
-                    className="cursor-pointer hover:shadow-md transition-shadow active:scale-[0.99]"
+                    className="cursor-pointer hover:shadow-md transition-all active:scale-[0.99] overflow-hidden"
                     onClick={() => navigate(`/campaign/${campaign.id}`)}
                   >
+                    {/* Progress bar at top of card */}
+                    <div className="h-1 bg-muted">
+                      <div
+                        className="h-full bg-primary rounded-r-full transition-all duration-500"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
                     <CardContent className="py-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-start gap-3 flex-1 min-w-0">
-                          <BrandAvatar campaign={campaign} size="sm" />
-                          <div className="min-w-0">
+                      <div className="flex items-center gap-3">
+                        <BrandAvatar campaign={campaign} size="sm" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
                             <p className="text-xs text-muted-foreground font-medium">
                               {campaign.brandName}
                             </p>
-                            <h4 className="font-semibold mt-0.5 truncate">{campaign.title}</h4>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge
-                                className={`${stepInfo.color} text-white text-[10px] px-2 py-0.5 border-0 gap-1`}
-                              >
-                                <StepIcon className="w-3 h-3" />
-                                {stepInfo.label}
-                              </Badge>
-                            </div>
+                            <Badge
+                              className={`${stepInfo.color} text-white text-[10px] px-2 py-0.5 border-0 gap-1 shrink-0`}
+                            >
+                              <StepIcon className="w-3 h-3" />
+                              {stepInfo.label}
+                            </Badge>
                           </div>
+                          <h4 className="font-semibold mt-0.5 truncate">{campaign.title}</h4>
+                          <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                            {campaign.compensationType} · Due {campaign.contentDueDate}
+                          </p>
                         </div>
-                        <ArrowRight className="w-5 h-5 text-muted-foreground shrink-0 mt-2" />
-                      </div>
-                      {/* Progress bar */}
-                      <div className="mt-3 h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-primary rounded-full transition-all duration-500"
-                          style={{ width: `${progress}%` }}
-                        />
+                        <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
                       </div>
                     </CardContent>
                   </Card>

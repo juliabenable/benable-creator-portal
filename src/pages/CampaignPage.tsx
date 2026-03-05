@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,7 +31,6 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { StepIndicator } from '@/components/StepIndicator';
-import { CampaignTimeline } from '@/components/CampaignTimeline';
 import { BrandAvatar } from '@/components/BrandAvatar';
 import { useCreator } from '@/context/CreatorContext';
 import { toast } from 'sonner';
@@ -70,6 +69,9 @@ import {
   MessageSquare,
   Sparkles,
   Info,
+  Home,
+  Edit3,
+  Check,
 } from 'lucide-react';
 import type { Campaign, ContentLinkEntry } from '@/types';
 
@@ -92,8 +94,9 @@ function ContentLinkPreview({ platform, url }: { platform: string; url: string }
   if (!url) return null;
 
   const isTikTok = platform.toLowerCase().includes('tiktok');
-  const bgColor = isTikTok ? 'bg-black' : 'bg-gradient-to-br from-purple-600 to-pink-500';
-  const label = isTikTok ? 'TT' : 'IG';
+  const isBenable = platform.toLowerCase().includes('benable');
+  const bgColor = isTikTok ? 'bg-black' : isBenable ? 'bg-primary' : 'bg-gradient-to-br from-purple-600 to-pink-500';
+  const label = isTikTok ? 'TT' : isBenable ? 'BN' : 'IG';
 
   return (
     <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
@@ -119,11 +122,19 @@ function HelpFooter() {
   );
 }
 
+/* ─── Platform options for content ─── */
+const CONTENT_PLATFORMS = [
+  { value: 'Benable Post', label: 'Benable Post' },
+  { value: 'TikTok', label: 'TikTok' },
+  { value: 'IG Post', label: 'IG Post' },
+  { value: 'IG Reel', label: 'IG Reel' },
+  { value: 'IG Story', label: 'IG Story' },
+];
+
 export default function CampaignPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { campaigns } = useCreator();
-  const [timelineOpen, setTimelineOpen] = useState(false);
 
   const campaign = campaigns.find((c) => c.id === id);
 
@@ -179,32 +190,6 @@ export default function CampaignPage() {
             <StepIndicator currentStep={campaign.currentStep} />
           </CardContent>
         </Card>
-      )}
-
-      {/* Collapsible Timeline — hide for interest_check */}
-      {campaign.currentStep !== 'interest_check' && (
-        <Collapsible open={timelineOpen} onOpenChange={setTimelineOpen}>
-          <Card>
-            <CollapsibleTrigger asChild>
-              <button className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors rounded-xl">
-                <span>Campaign Timeline</span>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${
-                    timelineOpen ? 'rotate-180' : ''
-                  }`}
-                />
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <div className="px-5 pb-4">
-                <CampaignTimeline
-                  currentStep={campaign.currentStep}
-                  stepTimestamps={campaign.stepTimestamps}
-                />
-              </div>
-            </CollapsibleContent>
-          </Card>
-        </Collapsible>
       )}
 
       {/* Dynamic Step Content with Animation */}
@@ -328,7 +313,7 @@ function InterestCheckStep({ campaign }: StepProps) {
           <CardContent className="space-y-3">
             <p className="text-xs text-muted-foreground">
               Please let us know why this campaign isn't a fit. This helps us send you better
-              matches in the future. Consider me for future campaigns.
+              matches in the future.
             </p>
             <Textarea
               placeholder="e.g. Not available during this timeframe, doesn't align with my content, already have a competing partnership..."
@@ -366,9 +351,19 @@ function InterestCheckStep({ campaign }: StepProps) {
   );
 }
 
-/* ─── Step: Campaign Invitation (Full Brief) ─── */
+/* ─── Step: Campaign Invitation (Full Brief — Scroll-to-Accept) ─── */
 function InvitationStep({ campaign }: StepProps) {
   const { setCampaignStep } = useCreator();
+  const briefEndRef = useRef<HTMLDivElement>(null);
+  const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
+
+  function handleBriefScroll(e: React.UIEvent<HTMLDivElement>) {
+    const el = e.currentTarget;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 20;
+    if (atBottom) {
+      setHasScrolledToEnd(true);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -379,73 +374,105 @@ function InvitationStep({ campaign }: StepProps) {
             <span className="font-semibold text-amber-900 text-sm">Action Required</span>
           </div>
           <p className="text-sm text-amber-800">
-            Review the full campaign brief below and accept to participate.
+            Read the full campaign brief below and scroll to the end to accept.
           </p>
         </CardContent>
       </Card>
 
+      {/* Full Campaign Brief — Scrollable like T&C */}
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Campaign Brief</CardTitle>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <FileText className="w-4 h-4 text-primary" />
+            Campaign Brief
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">{campaign.description}</p>
+        <CardContent className="p-0">
+          <div
+            className="max-h-[400px] overflow-y-auto px-5 pb-5 space-y-5"
+            onScroll={handleBriefScroll}
+          >
+            <p className="text-sm text-muted-foreground leading-relaxed">{campaign.description}</p>
 
-          <Separator />
+            <Separator />
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-primary shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Compensation</p>
-                <p className="text-sm font-medium">{campaign.paymentDetails}</p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Compensation</p>
+                  <p className="text-sm font-medium">{campaign.paymentDetails}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Content Due</p>
+                  <p className="text-sm font-medium">{campaign.contentDueDate}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Publish Window</p>
+                  <p className="text-sm font-medium">{campaign.publishWindowStart} — {campaign.publishWindowEnd}</p>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Content Due</p>
-                <p className="text-sm font-medium">{campaign.contentDueDate}</p>
+
+            <Separator />
+
+            <div>
+              <p className="text-sm font-medium mb-2">Content Requirements</p>
+              <ul className="space-y-1.5">
+                {campaign.requirements.map((req, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    {req}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium mb-2">Required Hashtags</p>
+              <div className="flex flex-wrap gap-1.5">
+                {campaign.hashtags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="text-xs">
+                    <Hash className="w-3 h-3 mr-0.5" />
+                    {tag.replace('#', '')}
+                  </Badge>
+                ))}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Publish Window</p>
-                <p className="text-sm font-medium">{campaign.publishWindowStart} — {campaign.publishWindowEnd}</p>
-              </div>
+
+            <Separator />
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Terms & Commitments</p>
+              <ul className="space-y-1.5 text-xs text-muted-foreground">
+                <li>• You agree to deliver the content as described above by the due dates specified.</li>
+                <li>• All content must be submitted for review before publishing publicly.</li>
+                <li>• You may not publish any content from this campaign until it has been approved.</li>
+                <li>• You agree to keep the product and campaign details confidential until publication.</li>
+                <li>• The brand reserves the right to request revisions to submitted content.</li>
+                <li>• Compensation will be delivered after successful campaign completion.</li>
+              </ul>
             </div>
-          </div>
 
-          <Separator />
-
-          <div>
-            <p className="text-sm font-medium mb-2">Content Requirements</p>
-            <ul className="space-y-1.5">
-              {campaign.requirements.map((req, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  {req}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <p className="text-sm font-medium mb-2">Required Hashtags</p>
-            <div className="flex flex-wrap gap-1.5">
-              {campaign.hashtags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  <Hash className="w-3 h-3 mr-0.5" />
-                  {tag.replace('#', '')}
-                </Badge>
-              ))}
+            <div ref={briefEndRef} className="pt-2">
+              {!hasScrolledToEnd && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <ChevronDown className="w-4 h-4 animate-bounce" />
+                  Scroll down to read the full brief before accepting
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-primary/20">
+      <Card className={`border-primary/20 transition-opacity ${hasScrolledToEnd ? 'opacity-100' : 'opacity-50'}`}>
         <CardContent className="py-4 space-y-3">
           <div className="flex items-start gap-2">
             <FileText className="w-5 h-5 text-primary shrink-0 mt-0.5" />
@@ -460,9 +487,12 @@ function InvitationStep({ campaign }: StepProps) {
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button className="w-full h-12 text-base font-semibold">
+              <Button
+                className="w-full h-12 text-base font-semibold"
+                disabled={!hasScrolledToEnd}
+              >
                 <ShieldCheck className="w-5 h-5 mr-2" />
-                Accept & Commit
+                {hasScrolledToEnd ? 'Accept & Commit' : 'Read brief to accept'}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -495,11 +525,12 @@ function InvitationStep({ campaign }: StepProps) {
   );
 }
 
-/* ─── Step: Product Phase (with address confirm + checkout instructions) ─── */
+/* ─── Step: Product Phase (with address confirm/modify + checkout) ─── */
 function ProductPhaseStep({ campaign }: StepProps) {
   const { setCampaignStep, updateCampaignField } = useCreator();
   const [confirmationNumber, setConfirmationNumber] = useState('');
   const [addressConfirmed, setAddressConfirmed] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -515,40 +546,88 @@ function ProductPhaseStep({ campaign }: StepProps) {
         </CardContent>
       </Card>
 
-      {/* Confirm Shipping Address */}
+      {/* Confirm or Modify Shipping Address */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <MapPin className="w-4 h-4 text-primary" />
-            Confirm Your Shipping Address
+            Shipping Address
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            Please confirm your address is correct so the brand can send you the product. Update
-            it below if anything has changed.
-          </p>
-          <div className="bg-muted rounded-lg p-3 space-y-1 text-sm">
-            <p className="font-medium">123 Main St</p>
-            <p className="text-muted-foreground">New York, NY 10001</p>
-            <p className="text-muted-foreground">United States</p>
-          </div>
-          {!addressConfirmed ? (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setAddressConfirmed(true);
-                toast.success('Address confirmed!');
-              }}
-            >
-              <CheckCircle2 className="w-4 h-4 mr-2" />
-              Confirm Address
-            </Button>
+          {!editingAddress ? (
+            <>
+              <div className="bg-muted rounded-lg p-3 space-y-1 text-sm">
+                <p className="font-medium">123 Main St</p>
+                <p className="text-muted-foreground">New York, NY 10001</p>
+                <p className="text-muted-foreground">United States</p>
+              </div>
+              {!addressConfirmed ? (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      setAddressConfirmed(true);
+                      toast.success('Address confirmed!');
+                    }}
+                  >
+                    <CheckCircle2 className="w-4 h-4 mr-2" />
+                    Confirm
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setEditingAddress(true)}
+                  >
+                    <Edit3 className="w-4 h-4 mr-2" />
+                    Modify
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-sm text-primary">
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span className="font-medium">Address confirmed</span>
+                </div>
+              )}
+            </>
           ) : (
-            <div className="flex items-center gap-2 text-sm text-primary">
-              <CheckCircle2 className="w-4 h-4" />
-              <span className="font-medium">Address confirmed</span>
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Street Address</Label>
+                <Input placeholder="123 Main St" defaultValue="123 Main St" className="h-9" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">City</Label>
+                  <Input placeholder="City" defaultValue="New York" className="h-9" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">State</Label>
+                  <Input placeholder="State" defaultValue="NY" className="h-9" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">ZIP</Label>
+                  <Input placeholder="ZIP" defaultValue="10001" className="h-9" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Country</Label>
+                  <Input placeholder="Country" defaultValue="United States" className="h-9" />
+                </div>
+              </div>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  setEditingAddress(false);
+                  setAddressConfirmed(true);
+                  toast.success('Address updated and confirmed!');
+                }}
+              >
+                <Check className="w-4 h-4 mr-2" />
+                Save & Confirm
+              </Button>
             </div>
           )}
         </CardContent>
@@ -579,30 +658,13 @@ function ProductPhaseStep({ campaign }: StepProps) {
             </div>
           )}
 
-          {/* Checkout instructions */}
           <div className="flex items-start gap-2.5 p-3 bg-blue-50 rounded-lg">
             <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
             <p className="text-xs text-blue-700">
               Use this product code at checkout on the brand's website. Add products to your
-              cart, enter the code in the promo/gift code field, and complete your order as
-              normal.
+              cart, enter the code in the promo/gift code field, and complete your order as normal.
             </p>
           </div>
-
-          {campaign.productOptions && campaign.productOptions.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Choose your product:</p>
-              {campaign.productOptions.map((option) => (
-                <Button
-                  key={option}
-                  variant={campaign.selectedProduct === option ? 'default' : 'outline'}
-                  className="w-full justify-start"
-                >
-                  {option}
-                </Button>
-              ))}
-            </div>
-          )}
 
           <Separator />
 
@@ -695,14 +757,6 @@ function OrderPlacedStep({ campaign }: StepProps) {
           I've Received My Product
         </Button>
       </StickyCTA>
-
-      <UpcomingSteps
-        steps={[
-          'Create your content per the brief',
-          'Submit content for review',
-          'Publish during your window',
-        ]}
-      />
     </div>
   );
 }
@@ -764,7 +818,7 @@ function OrderReceivedStep({ campaign }: StepProps) {
   );
 }
 
-/* ─── Collapsible Campaign Brief ─── */
+/* ─── Collapsible Campaign Brief (Full) ─── */
 function CampaignBriefCollapsible({ campaign }: StepProps) {
   const [briefOpen, setBriefOpen] = useState(false);
 
@@ -818,19 +872,22 @@ function CampaignBriefCollapsible({ campaign }: StepProps) {
   );
 }
 
-/* ─── Step: Content Upload (Dynamic links + AI pre-check) ─── */
+/* ─── Step: Content Upload (Dynamic links + AI pre-check PER ITEM) ─── */
 function ContentUploadStep({ campaign }: StepProps) {
   const { setCampaignStep, updateCampaignField } = useCreator();
-  const [links, setLinks] = useState<ContentLinkEntry[]>(
-    campaign.requiredPlatforms.map((p, i) => ({
+  const [links, setLinks] = useState<(ContentLinkEntry & { imageMode?: boolean })[]>(
+    ['Benable Post', ...campaign.requiredPlatforms].map((p, i) => ({
       id: `link-${i}`,
       platform: p,
       type: 'link' as const,
       url: '',
+      imageMode: false,
     }))
   );
   const [checking, setChecking] = useState(false);
-  const [preCheckResults, setPreCheckResults] = useState<{ label: string; ok: boolean }[] | null>(null);
+  const [preCheckResults, setPreCheckResults] = useState<
+    { platform: string; checks: { label: string; ok: boolean }[] }[] | null
+  >(null);
 
   function addLink() {
     setLinks((prev) => [...prev, {
@@ -838,6 +895,7 @@ function ContentUploadStep({ campaign }: StepProps) {
       platform: 'TikTok',
       type: 'link',
       url: '',
+      imageMode: false,
     }]);
   }
 
@@ -846,31 +904,38 @@ function ContentUploadStep({ campaign }: StepProps) {
     setLinks((prev) => prev.filter((l) => l.id !== id));
   }
 
-  function updateLink(id: string, field: keyof ContentLinkEntry, value: string) {
+  function updateLink(id: string, field: string, value: string | boolean) {
     setLinks((prev) => prev.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
   }
 
   function runPreCheck() {
     setChecking(true);
     setPreCheckResults(null);
-    // Simulate AI pre-check (3 seconds)
     setTimeout(() => {
-      const hasLinks = links.some((l) => l.url.trim());
-      setPreCheckResults([
-        { label: 'Brand tag @28Lycia in caption', ok: true },
-        { label: `Hashtag #Ad included`, ok: false },
-        { label: `Hashtag #28Lycia included`, ok: true },
-        { label: 'Content link provided', ok: hasLinks },
-      ]);
+      const results = links.map((link) => {
+        const hasContent = link.url.trim() || link.imageMode;
+        const isBenable = link.platform.includes('Benable');
+        return {
+          platform: link.platform,
+          checks: [
+            { label: `Brand tag @28Litsea in caption`, ok: !isBenable },
+            { label: `Required hashtags included`, ok: isBenable ? true : Math.random() > 0.3 },
+            { label: 'Content provided', ok: !!hasContent },
+          ],
+        };
+      });
+      setPreCheckResults(results);
       setChecking(false);
     }, 2500);
   }
 
   function handleSubmit() {
-    updateCampaignField(campaign.id, { contentSubmissions: links.filter((l) => l.url) });
+    updateCampaignField(campaign.id, { contentSubmissions: links.filter((l) => l.url || l.imageMode) });
     setCampaignStep(campaign.id, 'content_review');
     toast.success('Content submitted for review!');
   }
+
+  const allPassed = preCheckResults?.every((r) => r.checks.every((c) => c.ok));
 
   return (
     <div className="space-y-4">
@@ -910,14 +975,14 @@ function ContentUploadStep({ campaign }: StepProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Share links to your draft content (unlisted or private links are fine). For Instagram
-            Stories, you can upload screenshots instead.
+            Share links to your draft content or upload images. Each deliverable will be
+            checked for compliance individually.
           </p>
 
           {links.map((link, idx) => (
             <div key={link.id} className="border rounded-lg p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <Badge variant="secondary" className="text-xs">Link {idx + 1}</Badge>
+                <Badge variant="secondary" className="text-xs">Deliverable {idx + 1}</Badge>
                 {links.length > 1 && (
                   <button onClick={() => removeLink(link.id)} className="text-muted-foreground hover:text-destructive transition-colors">
                     <Trash2 className="w-4 h-4" />
@@ -929,18 +994,17 @@ function ContentUploadStep({ campaign }: StepProps) {
                   <Select value={link.platform} onValueChange={(v) => updateLink(link.id, 'platform', v)}>
                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="TikTok">TikTok</SelectItem>
-                      <SelectItem value="Instagram Reel">IG Reel</SelectItem>
-                      <SelectItem value="Instagram Story">IG Story</SelectItem>
-                      <SelectItem value="Instagram Carousel">IG Carousel</SelectItem>
+                      {CONTENT_PLATFORMS.map((p) => (
+                        <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="col-span-3">
-                  {link.platform === 'Instagram Story' ? (
+                  {link.imageMode ? (
                     <div className="flex items-center gap-2 h-9 px-3 border rounded-md bg-muted/50 text-sm text-muted-foreground cursor-pointer">
                       <Image className="w-4 h-4" />
-                      <span>Upload screenshots</span>
+                      <span>Upload image</span>
                     </div>
                   ) : (
                     <Input
@@ -952,7 +1016,14 @@ function ContentUploadStep({ campaign }: StepProps) {
                   )}
                 </div>
               </div>
-              {link.url && link.platform !== 'Instagram Story' && (
+              {/* Toggle link/image */}
+              <button
+                onClick={() => updateLink(link.id, 'imageMode', !link.imageMode)}
+                className="text-[11px] text-primary hover:underline"
+              >
+                {link.imageMode ? 'Switch to link' : 'Upload an image instead'}
+              </button>
+              {link.url && !link.imageMode && (
                 <ContentLinkPreview platform={link.platform} url={link.url} />
               )}
             </div>
@@ -960,37 +1031,52 @@ function ContentUploadStep({ campaign }: StepProps) {
 
           <Button type="button" variant="outline" size="sm" className="w-full" onClick={addLink}>
             <Plus className="w-4 h-4 mr-1" />
-            Add Another Link
+            Add Another Deliverable
           </Button>
         </CardContent>
       </Card>
 
-      {/* AI Pre-Check */}
+      {/* AI Pre-Check — per content item */}
       {preCheckResults && (
         <Card className="border-blue-200">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-blue-600" />
-              Quick Compliance Check
+              Compliance Check
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {preCheckResults.map((result, i) => (
-              <div key={i} className="flex items-center gap-2 text-sm">
-                {result.ok ? (
-                  <CheckCircle2 className="w-4 h-4 text-primary" />
-                ) : (
-                  <XCircle className="w-4 h-4 text-red-500" />
-                )}
-                <span className={result.ok ? '' : 'text-red-600 font-medium'}>
-                  {result.label}
-                </span>
-              </div>
-            ))}
-            {preCheckResults.some((r) => !r.ok) && (
-              <p className="text-xs text-amber-600 mt-2">
-                Some items need attention. You can fix them before submitting, or proceed anyway
-                — the team will review everything.
+          <CardContent className="space-y-4">
+            {preCheckResults.map((result, ri) => {
+              const allOk = result.checks.every((c) => c.ok);
+              return (
+                <div key={ri} className={`border rounded-lg p-3 space-y-2 ${allOk ? 'border-primary/30 bg-primary/5' : 'border-red-200 bg-red-50/50'}`}>
+                  <div className="flex items-center gap-2">
+                    {allOk ? (
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-red-500" />
+                    )}
+                    <span className="text-sm font-medium">{result.platform}</span>
+                    {allOk && <Badge className="bg-primary text-white text-[10px] px-1.5 py-0 border-0">Pass</Badge>}
+                  </div>
+                  {result.checks.map((check, ci) => (
+                    <div key={ci} className="flex items-center gap-2 text-xs ml-6">
+                      {check.ok ? (
+                        <CheckCircle2 className="w-3 h-3 text-primary" />
+                      ) : (
+                        <XCircle className="w-3 h-3 text-red-500" />
+                      )}
+                      <span className={check.ok ? 'text-muted-foreground' : 'text-red-600 font-medium'}>
+                        {check.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+            {!allPassed && (
+              <p className="text-xs text-red-600 font-medium">
+                Some items need attention. Please fix them before submitting.
               </p>
             )}
           </CardContent>
@@ -1095,13 +1181,27 @@ function ContentReviewStep({ campaign }: StepProps) {
   );
 }
 
-/* ─── Step: Compliance Feedback (Structured Checklist + Notes) ─── */
+/* ─── Step: Compliance Feedback (Per-Deliverable with Link Resubmission) ─── */
 function ComplianceFeedbackStep({ campaign }: StepProps) {
   const { setCampaignStep } = useCreator();
   const checklist = campaign.complianceChecklist || [];
 
-  const needsAttention = checklist.filter((item) => item.status !== 'approved');
-  const lookingGood = checklist.filter((item) => item.status === 'approved');
+  // Group feedback by deliverable (simulate grouping)
+  const deliverables = [
+    {
+      platform: 'TikTok',
+      items: checklist.filter((c) => ['Product Visibility', 'Video Length', 'Content Quality'].includes(c.category)),
+    },
+    {
+      platform: 'IG Reel',
+      items: checklist.filter((c) => ['Hashtags', 'Lighting', 'Brand Mention'].includes(c.category)),
+    },
+  ];
+
+  const [resubLinks, setResubLinks] = useState<Record<string, string>>({
+    'TikTok': '',
+    'IG Reel': '',
+  });
 
   return (
     <div className="space-y-4">
@@ -1112,8 +1212,8 @@ function ComplianceFeedbackStep({ campaign }: StepProps) {
             <span className="font-semibold text-red-900 text-sm">Changes Needed</span>
           </div>
           <p className="text-sm text-red-800">
-            Your content needs some adjustments before it can be approved. Please review the
-            checklist below.
+            Your content needs some adjustments before it can be approved. Review the feedback
+            for each deliverable below.
           </p>
         </CardContent>
       </Card>
@@ -1135,73 +1235,88 @@ function ComplianceFeedbackStep({ campaign }: StepProps) {
         </Card>
       )}
 
-      {/* Needs Attention */}
-      {needsAttention.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-500" />
-              Needs Attention ({needsAttention.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {needsAttention.map((item) => (
-              <div key={item.id} className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
-                <div className="shrink-0 mt-0.5">
-                  {item.status === 'missing' ? (
-                    <XCircle className="w-5 h-5 text-red-500" />
-                  ) : (
-                    <AlertCircle className="w-5 h-5 text-amber-500" />
-                  )}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium">{item.category}</p>
-                    <Badge
-                      variant="secondary"
-                      className={`text-[10px] ${
-                        item.status === 'missing'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-amber-100 text-amber-700'
+      {/* Per-deliverable feedback with drawers */}
+      {deliverables.map((del) => {
+        const needsWork = del.items.some((item) => item.status !== 'approved');
+        return (
+          <Collapsible key={del.platform} defaultOpen={needsWork}>
+            <Card className={needsWork ? 'border-amber-200' : 'border-primary/20'}>
+              <CollapsibleTrigger asChild>
+                <button className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors rounded-xl">
+                  <span className="flex items-center gap-2">
+                    {needsWork ? (
+                      <AlertCircle className="w-4 h-4 text-amber-500" />
+                    ) : (
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                    )}
+                    {del.platform}
+                    {needsWork && (
+                      <Badge className="bg-amber-100 text-amber-700 text-[10px] border-0">Needs Changes</Badge>
+                    )}
+                    {!needsWork && (
+                      <Badge className="bg-primary/10 text-primary text-[10px] border-0">Approved</Badge>
+                    )}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-3 pt-0">
+                  {del.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`flex items-start gap-3 p-3 rounded-lg ${
+                        item.status === 'approved' ? 'bg-primary/5' : 'bg-amber-50'
                       }`}
                     >
-                      {item.status === 'missing' ? 'Missing' : 'Needs Improvement'}
-                    </Badge>
-                  </div>
-                  {item.note && (
-                    <p className="text-sm text-muted-foreground mt-1">{item.note}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+                      <div className="shrink-0 mt-0.5">
+                        {item.status === 'approved' ? (
+                          <CheckCircle2 className="w-4 h-4 text-primary" />
+                        ) : item.status === 'missing' ? (
+                          <XCircle className="w-4 h-4 text-red-500" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-amber-500" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium">{item.category}</p>
+                          {item.status !== 'approved' && (
+                            <Badge
+                              variant="secondary"
+                              className={`text-[10px] ${
+                                item.status === 'missing' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                              }`}
+                            >
+                              {item.status === 'missing' ? 'Missing' : 'Needs Improvement'}
+                            </Badge>
+                          )}
+                        </div>
+                        {item.note && (
+                          <p className="text-xs text-muted-foreground mt-1">{item.note}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
 
-      {/* Looking Good */}
-      {lookingGood.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-primary" />
-              Looking Good ({lookingGood.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {lookingGood.map((item) => (
-              <div key={item.id} className="flex items-start gap-3 p-3 bg-primary/5 rounded-lg">
-                <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium">{item.category}</p>
-                  {item.note && (
-                    <p className="text-sm text-muted-foreground mt-0.5">{item.note}</p>
+                  {/* Resubmit link for this deliverable */}
+                  {needsWork && (
+                    <div className="space-y-1.5 pt-2 border-t">
+                      <Label className="text-xs">Updated {del.platform} Link</Label>
+                      <Input
+                        placeholder="Paste updated content link..."
+                        value={resubLinks[del.platform] || ''}
+                        onChange={(e) => setResubLinks((prev) => ({ ...prev, [del.platform]: e.target.value }))}
+                        className="h-9"
+                      />
+                    </div>
                   )}
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
+        );
+      })}
 
       {/* Collapsible brief */}
       <CampaignBriefCollapsible campaign={campaign} />
@@ -1222,11 +1337,11 @@ function ComplianceFeedbackStep({ campaign }: StepProps) {
   );
 }
 
-/* ─── Step: Content Approved + Publish (Window Logic + Big CTA) ─── */
+/* ─── Step: Content Approved + Publish (Window Logic + Live Links) ─── */
 function ContentApprovedStep({ campaign }: StepProps) {
   const { setCampaignStep, updateCampaignField } = useCreator();
   const [links, setLinks] = useState<ContentLinkEntry[]>(
-    campaign.requiredPlatforms.map((p, i) => ({
+    ['Benable Post', ...campaign.requiredPlatforms].map((p, i) => ({
       id: `pub-${i}`,
       platform: p,
       type: 'link' as const,
@@ -1295,30 +1410,22 @@ function ContentApprovedStep({ campaign }: StepProps) {
               Your publish window is open{isInWindow ? ` until ${campaign.publishWindowEnd}` : ''}.
               Go post your approved content now!
             </p>
-            <Button
-              size="lg"
-              className="mt-4 h-14 text-lg font-bold px-8"
-              onClick={() => setHasPosted(true)}
-            >
-              <Rocket className="w-6 h-6 mr-2" />
-              I've Posted My Content
-            </Button>
           </CardContent>
         </Card>
       )}
 
-      {/* Public Links Input — shown after "I've Posted" or always visible */}
-      {(hasPosted || !isPreWindow) && (
+      {/* Live Public Links Input — shown during/after window */}
+      {!isPreWindow && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Public Post Links</CardTitle>
+            <CardTitle className="text-base">Submit Your Live Links</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-2.5 p-3 bg-amber-50 rounded-lg">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-700">
                 <strong>This campaign will not be marked as complete until you submit your
-                public post links.</strong> This is a requirement for all campaigns.
+                live post links.</strong>
               </p>
             </div>
 
@@ -1337,30 +1444,22 @@ function ContentApprovedStep({ campaign }: StepProps) {
                     <Select value={link.platform} onValueChange={(v) => updateLink(link.id, 'platform', v)}>
                       <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="TikTok">TikTok</SelectItem>
-                        <SelectItem value="Instagram Reel">IG Reel</SelectItem>
-                        <SelectItem value="Instagram Story">IG Story</SelectItem>
-                        <SelectItem value="Instagram Carousel">IG Carousel</SelectItem>
+                        {CONTENT_PLATFORMS.map((p) => (
+                          <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="col-span-3">
-                    {link.platform === 'Instagram Story' ? (
-                      <div className="flex items-center gap-2 h-9 px-3 border rounded-md bg-muted/50 text-sm text-muted-foreground cursor-pointer">
-                        <Image className="w-4 h-4" />
-                        <span>Upload screenshots</span>
-                      </div>
-                    ) : (
-                      <Input
-                        placeholder="Paste public link..."
-                        value={link.url}
-                        onChange={(e) => updateLink(link.id, 'url', e.target.value)}
-                        className="h-9"
-                      />
-                    )}
+                    <Input
+                      placeholder="Paste public link..."
+                      value={link.url}
+                      onChange={(e) => updateLink(link.id, 'url', e.target.value)}
+                      className="h-9"
+                    />
                   </div>
                 </div>
-                {link.url && link.platform !== 'Instagram Story' && (
+                {link.url && (
                   <ContentLinkPreview platform={link.platform} url={link.url} />
                 )}
               </div>
@@ -1374,49 +1473,61 @@ function ContentApprovedStep({ campaign }: StepProps) {
         </Card>
       )}
 
-      {/* Complete with Confirmation Dialog */}
+      {/* I've published + Confirm & Complete */}
       {!isPreWindow && (
         <StickyCTA>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button className="w-full h-12 text-base font-semibold">
-                <CheckCircle2 className="w-5 h-5 mr-2" />
-                Confirm & Complete Campaign
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Complete Campaign</AlertDialogTitle>
-                <AlertDialogDescription>
-                  By confirming, you verify that your content has been published and the links
-                  provided are the live public posts. This will mark the campaign as complete.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    updateCampaignField(campaign.id, { publishedLinks: links.filter((l) => l.url) });
-                    setCampaignStep(campaign.id, 'completed');
-                    toast.success('Campaign completed! Thank you!');
-                  }}
-                >
-                  Confirm & Complete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          {!hasPosted ? (
+            <Button
+              className="w-full h-12 text-base font-semibold"
+              onClick={() => setHasPosted(true)}
+            >
+              <Rocket className="w-5 h-5 mr-2" />
+              I've Published My Content
+            </Button>
+          ) : (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button className="w-full h-12 text-base font-semibold">
+                  <CheckCircle2 className="w-5 h-5 mr-2" />
+                  Confirm & Complete Campaign
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Complete Campaign</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    By confirming, you verify that your content has been published and the links
+                    provided are the live public posts. This will mark the campaign as complete.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => {
+                      updateCampaignField(campaign.id, { publishedLinks: links.filter((l) => l.url) });
+                      setCampaignStep(campaign.id, 'completed');
+                      toast.success('Campaign completed! Thank you!');
+                    }}
+                  >
+                    Confirm & Complete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </StickyCTA>
       )}
     </div>
   );
 }
 
-/* ─── Step: Completed (Enhanced with Stats) ─── */
-function CompletedStep({ campaign }: StepProps) {
+/* ─── Step: Completed (Message from Benable, back to home, no summary) ─── */
+function CompletedStep({ campaign: _campaign }: StepProps) {
+  const navigate = useNavigate();
+
   return (
     <div className="space-y-4">
-      {/* Celebration with Stats */}
+      {/* Celebration */}
       <Card className="border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
         <CardContent className="py-6 text-center">
           <PartyPopper className="w-14 h-14 text-primary mx-auto mb-3" />
@@ -1462,52 +1573,29 @@ function CompletedStep({ campaign }: StepProps) {
         </CardContent>
       </Card>
 
-      {/* Brand Thank You */}
-      {campaign.brandThankYou && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Mail className="w-4 h-4 text-primary" />
-              Message from {campaign.brandName}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-muted rounded-lg p-4 italic text-sm">
-              "{campaign.brandThankYou}"
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Summary */}
+      {/* Message from Benable */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Campaign Summary</CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Mail className="w-4 h-4 text-primary" />
+            Message from Benable
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Brand</span>
-            <span className="font-medium">{campaign.brandName}</span>
+        <CardContent>
+          <div className="bg-muted rounded-lg p-4 italic text-sm">
+            "Thank you so much for being part of this campaign! Your content was amazing and we'd love to work with you again. Keep creating great content!"
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Campaign</span>
-            <span className="font-medium">{campaign.title}</span>
-          </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Compensation</span>
-            <span className="font-medium">{campaign.paymentDetails}</span>
-          </div>
-          <Separator />
-          {campaign.publishedLinks.length > 0 && (
-            <div>
-              <p className="text-sm font-medium mb-2">Published Content</p>
-              {campaign.publishedLinks.map((link, i) => (
-                <ContentLinkPreview key={i} platform={link.platform} url={link.url || 'Link submitted'} />
-              ))}
-            </div>
-          )}
         </CardContent>
       </Card>
+
+      {/* Back to Home */}
+      <Button
+        className="w-full h-12 text-base font-semibold"
+        onClick={() => navigate('/')}
+      >
+        <Home className="w-5 h-5 mr-2" />
+        Back to Home
+      </Button>
     </div>
   );
 }
@@ -1534,4 +1622,3 @@ function UpcomingSteps({ steps }: { steps: string[] }) {
     </Card>
   );
 }
-

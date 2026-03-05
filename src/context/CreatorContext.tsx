@@ -22,7 +22,7 @@ interface CreatorContextType {
 const INITIAL_CAMPAIGNS: Campaign[] = [
   {
     id: 'campaign-1',
-    brandName: '28 Lycia',
+    brandName: '28 Litsea',
     brandColor: '#9B6B4A',
     title: 'Summer Glow Collection Launch',
     description:
@@ -32,11 +32,11 @@ const INITIAL_CAMPAIGNS: Campaign[] = [
     requirements: [
       'Create 1 TikTok video (30-60 seconds) showcasing the product',
       'Create 1 Instagram Reel featuring the product in your skincare routine',
-      'Include brand mention @28Lycia in caption',
+      'Include brand mention @28Litsea in caption',
       'Show product packaging in at least 2 shots',
       'Use natural lighting for all content',
     ],
-    hashtags: ['#28Lycia', '#SummerGlow', '#SkincareRoutine', '#Ad', '#Gifted'],
+    hashtags: ['#28Litsea', '#SummerGlow', '#SkincareRoutine', '#Ad', '#Gifted'],
     contentDueDate: '2026-03-20',
     publishWindowStart: '2026-03-25',
     publishWindowEnd: '2026-03-31',
@@ -48,7 +48,7 @@ const INITIAL_CAMPAIGNS: Campaign[] = [
       { id: 'c1', category: 'Product Visibility', status: 'needs_improvement', note: 'Product packaging not clearly visible in first 3 seconds of TikTok video' },
       { id: 'c2', category: 'Hashtags', status: 'missing', note: '#Ad hashtag missing from Instagram caption' },
       { id: 'c3', category: 'Lighting', status: 'needs_improvement', note: 'Instagram Reel lighting could be improved — try natural lighting near a window' },
-      { id: 'c4', category: 'Brand Mention', status: 'approved', note: 'Great job including @28Lycia!' },
+      { id: 'c4', category: 'Brand Mention', status: 'approved', note: 'Great job including @28Litsea!' },
       { id: 'c5', category: 'Video Length', status: 'approved' },
       { id: 'c6', category: 'Content Quality', status: 'approved', note: 'Excellent production quality' },
     ],
@@ -61,7 +61,7 @@ const INITIAL_CAMPAIGNS: Campaign[] = [
       'Free products + $50 gift card compensation',
       'Content due by March 20, publish window March 25–31',
     ],
-    requiredPlatforms: ['TikTok', 'Instagram Reel'],
+    requiredPlatforms: ['TikTok', 'IG Reel'],
   },
 ];
 
@@ -70,7 +70,7 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
     id: 'notif-1',
     type: 'campaign_invite',
     title: 'New Campaign Opportunity',
-    message: '28 Lycia is interested in working with you for their Summer Glow Collection Launch. Are you interested?',
+    message: '28 Litsea is interested in working with you for their Summer Glow Collection Launch. Are you interested?',
     timestamp: new Date().toISOString(),
     read: false,
     campaignId: 'campaign-1',
