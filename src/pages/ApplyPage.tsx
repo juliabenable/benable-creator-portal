@@ -229,7 +229,7 @@ export default function ApplyPage() {
 function WelcomeStep() {
   return (
     <div className="text-center space-y-4 py-4">
-      <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10">
+      <div className="welcome-icon icon-container inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10">
         <Sparkles className="w-7 h-7 text-primary" />
       </div>
       <div>
@@ -250,7 +250,7 @@ function WelcomeStep() {
           { icon: Sparkles, text: 'Free products or gift cards + compensation for every campaign' },
         ].map((item, i) => (
           <div key={i} className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <div className="icon-container w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
               <item.icon className="w-4 h-4 text-primary" />
             </div>
             <p className="text-sm">{item.text}</p>

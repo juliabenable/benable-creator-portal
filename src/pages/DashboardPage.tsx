@@ -63,7 +63,7 @@ export default function DashboardPage() {
       {creatorStatus === 'pending' && (
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="flex items-center gap-4 py-5">
-            <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+            <div className="icon-container w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
               <Clock className="w-6 h-6 text-amber-600" />
             </div>
             <div>
@@ -79,7 +79,7 @@ export default function DashboardPage() {
       {creatorStatus === 'accepted' && (
         <Card className="border-primary/20 bg-primary/5">
           <CardContent className="flex items-center gap-4 py-5">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <div className="icon-container w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
               <Sparkles className="w-6 h-6 text-primary" />
             </div>
             <div>
@@ -97,7 +97,7 @@ export default function DashboardPage() {
       {/* Interest Check Cards (are you interested?) */}
       {creatorStatus === 'accepted' && interestCampaigns.length > 0 && (
         <div>
-          <h3 className="font-semibold text-lg mb-3">New Opportunities</h3>
+          <h3 className="font-semibold text-lg mb-3 section-title">New Opportunities</h3>
           <div className="space-y-3">
             {interestCampaigns.map((campaign) => (
               <Card
@@ -137,12 +137,12 @@ export default function DashboardPage() {
       {/* Active Campaigns */}
       {creatorStatus === 'accepted' && (
         <div>
-          <h3 className="font-semibold text-lg mb-3">Your Campaigns</h3>
+          <h3 className="font-semibold text-lg mb-3 section-title">Your Campaigns</h3>
           {activeCampaigns.length === 0 && interestCampaigns.length === 0 ? (
             <div className="space-y-5">
               <Card className="border-primary/20">
                 <CardContent className="py-6 text-center">
-                  <PartyPopper className="w-12 h-12 text-primary mx-auto mb-3" />
+                  <PartyPopper className="welcome-icon w-12 h-12 text-primary mx-auto mb-3" />
                   <h3 className="font-bold text-lg">You're In!</h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     Your profile is being matched with brands. You'll receive your first campaign
@@ -152,12 +152,12 @@ export default function DashboardPage() {
               </Card>
 
               <div>
-                <h4 className="font-semibold text-base mb-3">What to Expect</h4>
+                <h4 className="font-semibold text-base mb-3 section-title">What to Expect</h4>
                 <div className="space-y-3">
                   {WHAT_TO_EXPECT.map((item, i) => (
                     <Card key={i}>
                       <CardContent className="flex items-start gap-3 py-3">
-                        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <div className="icon-container w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                           <item.icon className="w-4.5 h-4.5 text-primary" />
                         </div>
                         <div>
@@ -248,7 +248,7 @@ export default function DashboardPage() {
           </Card>
 
           <div>
-            <h4 className="font-semibold text-base mb-3">Tips to Strengthen Your Profile</h4>
+            <h4 className="font-semibold text-base mb-3 section-title">Tips to Strengthen Your Profile</h4>
             <div className="space-y-3">
               {[
                 { icon: TrendingUp, title: 'Grow your audience', text: 'Keep posting consistently and engaging with your community. A growing, active audience is what brands look for.' },
@@ -257,7 +257,7 @@ export default function DashboardPage() {
               ].map((item, i) => (
                 <Card key={i}>
                   <CardContent className="flex items-start gap-3 py-3">
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <div className="icon-container w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                       <item.icon className="w-4 h-4 text-primary" />
                     </div>
                     <div>
@@ -275,7 +275,7 @@ export default function DashboardPage() {
       {/* Next Steps Info (when pending) */}
       {creatorStatus === 'pending' && (
         <div>
-          <h3 className="font-semibold text-lg mb-3">What Happens Next</h3>
+          <h3 className="font-semibold text-lg mb-3 section-title">What Happens Next</h3>
           <div className="space-y-3">
             {[
               { step: '1', text: 'We review your application and social media presence' },
@@ -283,7 +283,7 @@ export default function DashboardPage() {
               { step: '3', text: "You'll receive products, create content, and get compensated for campaigns you participate in" },
             ].map((item) => (
               <div key={item.step} className="flex items-start gap-3">
-                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-xs font-semibold text-primary">
+                <div className="icon-container w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-xs font-semibold text-primary">
                   {item.step}
                 </div>
                 <p className="text-sm text-muted-foreground pt-1">{item.text}</p>

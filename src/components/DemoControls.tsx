@@ -2,8 +2,9 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Settings2, Bell, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Settings2, Bell, ToggleLeft, ToggleRight, Palette } from 'lucide-react';
 import { useCreator } from '@/context/CreatorContext';
+import { useTheme, type ThemeName } from '@/context/ThemeContext';
 import { ALL_STEPS_ORDERED, type CampaignStep, type CreatorStatus } from '@/types';
 
 const STATUS_OPTIONS: { value: CreatorStatus; label: string }[] = [
@@ -11,6 +12,13 @@ const STATUS_OPTIONS: { value: CreatorStatus; label: string }[] = [
   { value: 'pending', label: 'Pending Review' },
   { value: 'accepted', label: 'Accepted' },
   { value: 'not_accepted', label: 'Not Accepted' },
+];
+
+const THEME_OPTIONS: { value: ThemeName; label: string; desc: string }[] = [
+  { value: 'default', label: 'Current', desc: 'Teal, standard' },
+  { value: 'soft', label: 'A: Soft & Warm', desc: 'Coral, organic' },
+  { value: 'bold', label: 'B: Bold & Graphic', desc: 'Teal, editorial' },
+  { value: 'playful', label: 'C: Airy & Playful', desc: 'Violet, bouncy' },
 ];
 
 const STEP_LABELS: Record<CampaignStep, string> = {
@@ -29,6 +37,7 @@ const STEP_LABELS: Record<CampaignStep, string> = {
 export function DemoControls() {
   const { creatorStatus, setCreatorStatus, campaigns, setCampaignStep, advanceCampaignStep, updateCampaignField, addNotification, resetAll } =
     useCreator();
+  const { theme, setTheme } = useTheme();
 
   return (
     <Sheet>
@@ -47,6 +56,32 @@ export function DemoControls() {
           <SheetTitle>Demo Controls</SheetTitle>
         </SheetHeader>
         <div className="space-y-6 py-4">
+          {/* Design Theme Picker */}
+          <div>
+            <p className="text-sm font-medium mb-2 flex items-center gap-1.5">
+              <Palette className="w-4 h-4" />
+              Design Theme
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {THEME_OPTIONS.map((t) => (
+                <Button
+                  key={t.value}
+                  size="sm"
+                  variant={theme === t.value ? 'default' : 'outline'}
+                  className="h-auto py-2 flex flex-col items-start text-left"
+                  onClick={() => setTheme(t.value)}
+                >
+                  <span className="text-xs font-semibold">{t.label}</span>
+                  <span className={`text-[10px] ${theme === t.value ? 'opacity-80' : 'text-muted-foreground'}`}>
+                    {t.desc}
+                  </span>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
           <div>
             <p className="text-sm font-medium mb-2">Creator Status</p>
             <div className="flex flex-wrap gap-2">
