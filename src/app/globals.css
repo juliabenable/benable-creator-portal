@@ -669,6 +669,32 @@
   animation: theme-float 3s ease-in-out infinite;
 }
 
+/* Warning / amber overrides: warm neutrals instead of harsh yellow */
+[data-theme="soft"] .bg-amber-50 {
+  background-color: #FDF5EF !important;
+}
+[data-theme="soft"] .bg-amber-100 {
+  background-color: #FCEADB !important;
+}
+[data-theme="soft"] .text-amber-500 {
+  color: #D97706 !important;
+}
+[data-theme="soft"] .text-amber-600 {
+  color: #C2660A !important;
+}
+[data-theme="soft"] .text-amber-700 {
+  color: #9A4F08 !important;
+}
+[data-theme="soft"] .text-amber-800 {
+  color: #7C3F06 !important;
+}
+[data-theme="soft"] .text-amber-900 {
+  color: #5F3005 !important;
+}
+[data-theme="soft"] .border-amber-200 {
+  border-color: #F5D5B8 !important;
+}
+
 /* Soft theme: professional pulse timing */
 [data-theme="soft"] .animate-ping {
   animation-duration: 2.5s;

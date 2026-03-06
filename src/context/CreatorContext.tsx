@@ -41,8 +41,23 @@ const INITIAL_CAMPAIGNS: Campaign[] = [
     publishWindowStart: '2026-03-25',
     publishWindowEnd: '2026-03-31',
     paymentDetails: '$50 gift card + free product (valued at $85)',
-    productType: 'gift_card',
+    productType: 'product_choice',
     productCode: 'LYCIA-SUMMER-2026-XK9F',
+    productOptions: [
+      {
+        id: 'prod-1',
+        name: 'Summer Glow Serum',
+        description: 'Lightweight, vitamin C-infused face serum for a radiant glow',
+        imageUrl: '',
+      },
+      {
+        id: 'prod-2',
+        name: 'Hydra Mist Toner',
+        description: 'Refreshing toner with aloe vera and hyaluronic acid',
+        imageUrl: '',
+      },
+    ],
+    postingSchedule: 'window',
     contentSubmissions: [],
     complianceChecklist: [
       { id: 'c1', category: 'Product Visibility', status: 'needs_improvement', note: 'Product packaging not clearly visible in first 3 seconds of TikTok video' },

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Settings2, Bell, ToggleLeft, ToggleRight, Palette } from 'lucide-react';
 import { useCreator } from '@/context/CreatorContext';
 import { useTheme, type ThemeName } from '@/context/ThemeContext';
-import { ALL_STEPS_ORDERED, type CampaignStep, type CreatorStatus } from '@/types';
+import { ALL_STEPS_ORDERED, type CampaignStep, type CreatorStatus, type PostingScheduleType } from '@/types';
 
 const STATUS_OPTIONS: { value: CreatorStatus; label: string }[] = [
   { value: 'not_applied', label: 'Not Applied' },
@@ -132,6 +132,40 @@ export function DemoControls() {
                 >
                   Advance to Next Step
                 </Button>
+              </div>
+
+              {/* Product Type Toggle */}
+              <div className="flex items-center gap-2 mb-2">
+                <Button
+                  size="sm"
+                  variant={campaign.productType === 'product_choice' ? 'default' : 'outline'}
+                  className="gap-1.5 text-xs h-7"
+                  onClick={() => {
+                    updateCampaignField(campaign.id, {
+                      productType: campaign.productType === 'gift_card' ? 'product_choice' : 'gift_card',
+                    });
+                  }}
+                >
+                  {campaign.productType === 'product_choice' ? 'Product Choice' : 'Gift Card Only'}
+                </Button>
+              </div>
+
+              {/* Posting Schedule Toggle */}
+              <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                <span className="text-xs text-muted-foreground mr-1">Schedule:</span>
+                {(['asap', 'specific_date', 'window'] as PostingScheduleType[]).map((sched) => (
+                  <Button
+                    key={sched}
+                    size="sm"
+                    variant={campaign.postingSchedule === sched ? 'default' : 'outline'}
+                    className="text-xs h-7 px-2"
+                    onClick={() => {
+                      updateCampaignField(campaign.id, { postingSchedule: sched });
+                    }}
+                  >
+                    {sched === 'asap' ? 'ASAP' : sched === 'specific_date' ? 'Specific Date' : 'Window'}
+                  </Button>
+                ))}
               </div>
 
               {/* Publish Window Toggle */}

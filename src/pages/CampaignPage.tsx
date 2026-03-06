@@ -400,8 +400,14 @@ function InvitationStep({ campaign }: StepProps) {
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-primary shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Publish Window</p>
-                  <p className="text-sm font-medium">{campaign.publishWindowStart} — {campaign.publishWindowEnd}</p>
+                  <p className="text-xs text-muted-foreground">Posting Schedule</p>
+                  <p className="text-sm font-medium">
+                    {campaign.postingSchedule === 'asap'
+                      ? 'Post as soon as content is approved'
+                      : campaign.postingSchedule === 'specific_date'
+                        ? `Post on ${campaign.postingDate || campaign.publishWindowStart}`
+                        : `${campaign.publishWindowStart} — ${campaign.publishWindowEnd}`}
+                  </p>
                 </div>
               </div>
             </div>
@@ -460,9 +466,13 @@ function InvitationStep({ campaign }: StepProps) {
                 />
                 <span className="text-xs text-muted-foreground leading-relaxed">
                   I commit to delivering content as described in the brief by{' '}
-                  <strong className="text-foreground">{campaign.contentDueDate}</strong> and publishing between{' '}
-                  <strong className="text-foreground">{campaign.publishWindowStart}</strong> and{' '}
-                  <strong className="text-foreground">{campaign.publishWindowEnd}</strong>. This is a binding agreement with{' '}
+                  <strong className="text-foreground">{campaign.contentDueDate}</strong>
+                  {campaign.postingSchedule === 'asap'
+                    ? ' and publishing as soon as my content is approved'
+                    : campaign.postingSchedule === 'specific_date'
+                      ? <> and publishing on <strong className="text-foreground">{campaign.postingDate || campaign.publishWindowStart}</strong></>
+                      : <> and publishing between{' '}<strong className="text-foreground">{campaign.publishWindowStart}</strong> and{' '}<strong className="text-foreground">{campaign.publishWindowEnd}</strong></>
+                  }. This is a binding agreement with{' '}
                   {campaign.brandName}.
                 </span>
               </label>
@@ -496,11 +506,15 @@ function InvitationStep({ campaign }: StepProps) {
   );
 }
 
-/* ─── Step: Product Phase (with address confirm/modify + checkout) ─── */
+/* ─── Step: Product Phase (with product choice + address confirm/modify + checkout) ─── */
 function ProductPhaseStep({ campaign }: StepProps) {
-  const { setCampaignStep } = useCreator();
+  const { setCampaignStep, updateCampaignField } = useCreator();
   const [addressConfirmed, setAddressConfirmed] = useState(false);
   const [editingAddress, setEditingAddress] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string>(campaign.selectedProduct || '');
+
+  const hasProductChoice = campaign.productType === 'product_choice' && campaign.productOptions && campaign.productOptions.length > 1;
+  const productChosen = hasProductChoice ? !!selectedProductId : true;
 
   return (
     <div className="space-y-4">
@@ -511,13 +525,79 @@ function ProductPhaseStep({ campaign }: StepProps) {
             <span className="font-semibold text-amber-900 text-sm">Action Required</span>
           </div>
           <p className="text-xs text-amber-800">
-            Confirm your shipping address, then use your product code to place your order.
+            {hasProductChoice
+              ? 'Choose your product, confirm your shipping address, then use your product code to place your order.'
+              : 'Confirm your shipping address, then use your product code to place your order.'}
           </p>
         </CardContent>
       </Card>
 
+      {/* Product Choice — shown when brand offers multiple products */}
+      {hasProductChoice && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Package className="w-4 h-4 text-primary" />
+              Choose Your Product
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              {campaign.brandName} is offering you a choice between products. Select the one you'd like to feature in your content.
+            </p>
+            <div className="space-y-2">
+              {campaign.productOptions!.map((option) => {
+                const isSelected = selectedProductId === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedProductId(option.id);
+                      updateCampaignField(campaign.id, { selectedProduct: option.id });
+                      toast.success(`Selected: ${option.name}`);
+                    }}
+                    className={`w-full text-left rounded-lg border-2 p-4 transition-all ${
+                      isSelected
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                        : 'border-border hover:border-primary/40 hover:bg-muted/50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                          isSelected ? 'border-primary bg-primary' : 'border-muted-foreground/30'
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3 h-3 text-white" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-semibold ${isSelected ? 'text-primary' : ''}`}>
+                          {option.name}
+                        </p>
+                        {option.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{option.description}</p>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            {selectedProductId && (
+              <div className="flex items-center gap-2 text-sm text-primary">
+                <CheckCircle2 className="w-4 h-4" />
+                <span className="font-medium">
+                  Product selected: {campaign.productOptions!.find((o) => o.id === selectedProductId)?.name}
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Confirm or Modify Shipping Address */}
-      <Card>
+      <Card className={!productChosen ? 'opacity-50 pointer-events-none' : ''}>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <MapPin className="w-4 h-4 text-primary" />
@@ -604,7 +684,7 @@ function ProductPhaseStep({ campaign }: StepProps) {
       </Card>
 
       {/* Product Code + Checkout Instructions */}
-      <Card>
+      <Card className={!productChosen ? 'opacity-50 pointer-events-none' : ''}>
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Gift className="w-4 h-4 text-primary" />
@@ -655,6 +735,7 @@ function ProductPhaseStep({ campaign }: StepProps) {
       <StickyCTA>
         <Button
           className="w-full h-12 text-base font-semibold"
+          disabled={!productChosen}
           onClick={() => {
             window.scrollTo(0, 0);
             setCampaignStep(campaign.id, 'order_placed');
@@ -728,10 +809,10 @@ function OrderReceivedStep({ campaign }: StepProps) {
 
   return (
     <div className="space-y-4">
-      <Card className="border-primary/20 bg-primary/5">
+      <Card className="border-success/20 bg-success/5">
         <CardContent className="py-2.5">
           <div className="flex items-center gap-2 mb-1">
-            <CheckCircle2 className="w-5 h-5 text-primary" />
+            <CheckCircle2 className="w-5 h-5 text-success" />
             <span className="font-semibold text-sm">Product Received!</span>
           </div>
           <p className="text-xs text-muted-foreground">
@@ -826,7 +907,14 @@ function CampaignBriefCollapsible({ campaign }: StepProps) {
               </div>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4 text-primary shrink-0" />
-                Publish window: <strong>{campaign.publishWindowStart} — {campaign.publishWindowEnd}</strong>
+                Posting schedule:{' '}
+                <strong>
+                  {campaign.postingSchedule === 'asap'
+                    ? 'Post ASAP after approval'
+                    : campaign.postingSchedule === 'specific_date'
+                      ? `Post on ${campaign.postingDate || campaign.publishWindowStart}`
+                      : `${campaign.publishWindowStart} — ${campaign.publishWindowEnd}`}
+                </strong>
               </div>
             </div>
           </CardContent>
@@ -937,7 +1025,7 @@ function ContentUploadStep({ campaign }: StepProps) {
         const hasIssues = checks?.some((c) => !c.ok);
 
         return (
-          <Card key={link.id} className={checks ? (hasIssues ? 'border-amber-200' : 'border-primary/30') : ''}>
+          <Card key={link.id} className={checks ? (hasIssues ? 'border-amber-200' : 'border-success/30') : ''}>
             <CardContent className="py-3 space-y-2.5">
               {/* Header row */}
               <div className="flex items-center justify-between">
@@ -954,7 +1042,7 @@ function ContentUploadStep({ campaign }: StepProps) {
                   {checks && (
                     hasIssues
                       ? <Badge className="bg-amber-100 text-amber-700 text-[10px] border-0">Needs Attention</Badge>
-                      : <Badge className="bg-primary/10 text-primary text-[10px] border-0">Pass</Badge>
+                      : <Badge className="bg-success/10 text-success text-[10px] border-0">Pass</Badge>
                   )}
                 </div>
                 {links.length > 1 && (
@@ -992,11 +1080,11 @@ function ContentUploadStep({ campaign }: StepProps) {
                     <div
                       key={ci}
                       className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs ${
-                        check.ok ? 'bg-primary/5' : 'bg-amber-50'
+                        check.ok ? 'bg-success/5' : 'bg-red-50'
                       }`}
                     >
                       {check.ok ? (
-                        <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
                       ) : (
                         <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
                       )}
@@ -1164,21 +1252,21 @@ function ComplianceFeedbackStep({ campaign }: StepProps) {
         const needsWork = del.items.some((item) => item.status !== 'approved');
         return (
           <Collapsible key={del.platform} defaultOpen={needsWork}>
-            <Card className={needsWork ? 'border-amber-200' : 'border-primary/20'}>
+            <Card className={needsWork ? 'border-amber-200' : 'border-success/20'}>
               <CollapsibleTrigger asChild>
                 <button className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors rounded-xl">
                   <span className="flex items-center gap-2">
                     {needsWork ? (
                       <AlertCircle className="w-4 h-4 text-amber-500" />
                     ) : (
-                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      <CheckCircle2 className="w-4 h-4 text-success" />
                     )}
                     {del.platform}
                     {needsWork && (
                       <Badge className="bg-amber-100 text-amber-700 text-[10px] border-0">Needs Changes</Badge>
                     )}
                     {!needsWork && (
-                      <Badge className="bg-primary/10 text-primary text-[10px] border-0">Approved</Badge>
+                      <Badge className="bg-success/10 text-success text-[10px] border-0">Approved</Badge>
                     )}
                   </span>
                   <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -1190,12 +1278,12 @@ function ComplianceFeedbackStep({ campaign }: StepProps) {
                     <div
                       key={item.id}
                       className={`flex items-start gap-3 p-3 rounded-lg ${
-                        item.status === 'approved' ? 'bg-primary/5' : 'bg-amber-50'
+                        item.status === 'approved' ? 'bg-success/5' : 'bg-amber-50'
                       }`}
                     >
                       <div className="shrink-0 mt-0.5">
                         {item.status === 'approved' ? (
-                          <CheckCircle2 className="w-4 h-4 text-primary" />
+                          <CheckCircle2 className="w-4 h-4 text-success" />
                         ) : item.status === 'missing' ? (
                           <XCircle className="w-4 h-4 text-red-500" />
                         ) : (
@@ -1280,8 +1368,11 @@ function ContentApprovedStep({ campaign }: StepProps) {
   const windowStart = new Date(campaign.publishWindowStart);
   const windowEnd = new Date(campaign.publishWindowEnd);
   const adminOverride = campaign.publishWindowOpen;
-  const isPreWindow = adminOverride ? false : now < windowStart;
-  const isInWindow = adminOverride ? true : (now >= windowStart && now <= windowEnd);
+  const scheduleType = campaign.postingSchedule || 'window';
+
+  // For ASAP or specific_date, skip the window waiting entirely
+  const isPreWindow = scheduleType === 'window' ? (adminOverride ? false : now < windowStart) : false;
+  const isInWindow = scheduleType === 'window' ? (adminOverride ? true : (now >= windowStart && now <= windowEnd)) : true;
 
   // Only required (non-extra) links must have URLs before completing
   const requiredLinks = links.filter((l) => !l.id.startsWith('pub-extra-'));
@@ -1318,13 +1409,36 @@ function ContentApprovedStep({ campaign }: StepProps) {
   return (
     <div className="space-y-4">
       {/* Celebration */}
-      <Card className="border-primary/20 bg-primary/5">
+      <Card className="border-success/20 bg-success/5">
         <CardContent className="py-5 text-center">
-          <CheckCircle2 className="w-12 h-12 text-primary mx-auto mb-3" />
+          <CheckCircle2 className="w-12 h-12 text-success mx-auto mb-3" />
           <h3 className="font-semibold text-lg">Content Approved!</h3>
           <p className="text-sm text-muted-foreground mt-1">
             Your content has been approved by {campaign.brandName}.
           </p>
+        </CardContent>
+      </Card>
+
+      {/* Posting Schedule Info */}
+      <Card className="bg-muted/50">
+        <CardContent className="py-3">
+          <div className="flex items-center gap-2 text-sm">
+            <Calendar className="w-4 h-4 text-primary shrink-0" />
+            <span className="font-medium">Posting Schedule:</span>
+            {scheduleType === 'asap' && (
+              <span className="text-muted-foreground">Post as soon as possible</span>
+            )}
+            {scheduleType === 'specific_date' && (
+              <span className="text-muted-foreground">
+                Post on <strong className="text-foreground">{campaign.postingDate || campaign.publishWindowStart}</strong>
+              </span>
+            )}
+            {scheduleType === 'window' && (
+              <span className="text-muted-foreground">
+                Post between <strong className="text-foreground">{campaign.publishWindowStart}</strong> and <strong className="text-foreground">{campaign.publishWindowEnd}</strong>
+              </span>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -1341,15 +1455,21 @@ function ContentApprovedStep({ campaign }: StepProps) {
           </CardContent>
         </Card>
       ) : (
-        /* "Publish your content now" CTA when in window */
+        /* "Publish your content now" CTA when ready */
         <Card className="border-primary bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="py-6 text-center">
             <Rocket className="w-14 h-14 text-primary mx-auto mb-3" />
-            <h3 className="font-bold text-xl">Publish Your Content Now</h3>
+            <h3 className="font-bold text-xl">
+              {scheduleType === 'asap' ? 'Publish Now!' : 'Publish Your Content Now'}
+            </h3>
             <p className="text-sm text-muted-foreground mt-1">
-              {isInWindow
-                ? <>Your publish window is open until <strong>{campaign.publishWindowEnd}</strong>. Post your content and submit the live links below.</>
-                : 'Post your approved content and submit the live links below.'}
+              {scheduleType === 'asap'
+                ? 'Your content is approved. Post it now and submit the live links below.'
+                : scheduleType === 'specific_date'
+                  ? <>Post your content on <strong>{campaign.postingDate || campaign.publishWindowStart}</strong> and submit the live links below.</>
+                  : isInWindow
+                    ? <>Your publish window is open until <strong>{campaign.publishWindowEnd}</strong>. Post your content and submit the live links below.</>
+                    : 'Post your approved content and submit the live links below.'}
             </p>
           </CardContent>
         </Card>

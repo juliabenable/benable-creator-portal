@@ -62,6 +62,15 @@ export type ContentLinkEntry = {
   url: string;
 };
 
+export type PostingScheduleType = 'asap' | 'specific_date' | 'window';
+
+export interface ProductOption {
+  id: string;
+  name: string;
+  description?: string;
+  imageUrl?: string;
+}
+
 export interface Campaign {
   id: string;
   brandName: string;
@@ -78,7 +87,7 @@ export interface Campaign {
   paymentDetails: string;
   productType: 'gift_card' | 'product_choice';
   productCode?: string;
-  productOptions?: string[];
+  productOptions?: ProductOption[];
   selectedProduct?: string;
   orderConfirmationNumber?: string;
   stepTimestamps?: Record<string, string>;
@@ -96,6 +105,9 @@ export interface Campaign {
   requiredPlatforms: string[];
   // Admin override: force publish window open for demo
   publishWindowOpen?: boolean;
+  // Posting schedule — how/when the creator should publish after approval
+  postingSchedule: PostingScheduleType;
+  postingDate?: string; // for 'specific_date' type
 }
 
 export const CAMPAIGN_STEPS: { key: CampaignStep; label: string }[] = [
