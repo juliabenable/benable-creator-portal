@@ -42,6 +42,7 @@ import {
   Flower2,
   Sofa,
   Image,
+  ExternalLink,
 } from 'lucide-react';
 import { useCreator } from '@/context/CreatorContext';
 import { StickyCTA } from '@/components/StickyCTA';
@@ -49,10 +50,6 @@ import { toast } from 'sonner';
 
 const TOTAL_STEPS = 5;
 const COUNTRIES = ['United States', 'Canada', 'United Kingdom', 'Australia', 'France', 'Germany', 'Brazil', 'Mexico', 'India', 'Japan'];
-const GENDERS = ['Female', 'Male', 'Non-binary', 'Mixed'];
-
-// Match TikTok & Instagram analytics age brackets
-const AGE_RANGES = ['13-17', '18-24', '25-34', '35-44', '45-54', '55+'];
 
 const CONTENT_NICHES = [
   { label: 'Beauty', icon: Heart },
@@ -448,17 +445,18 @@ function SocialStatsStep() {
                   <Input type="number" placeholder="e.g. 15000" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-1">
-                    Avg. Views
-                    <span className="text-[10px] font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">Estimate</span>
-                  </Label>
+                  <Label>Avg. Views</Label>
                   <Input type="number" placeholder="e.g. 5000" />
-                  <p className="text-[10px] text-muted-foreground">Self-reported estimate from your recent videos</p>
                 </div>
               </div>
-
-              {/* Demographics */}
-              <AudienceDemographics platform="tiktok" />
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1">
+                  Engagement Rate
+                  <span className="text-[10px] font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded-full cursor-help" title="Self-reported estimate from your account analytics">Estimate</span>
+                </Label>
+                <Input type="number" placeholder="e.g. 4.5" />
+                <p className="text-[10px] text-muted-foreground">Self-reported estimate from your account analytics</p>
+              </div>
             </CardContent>
           </CollapsibleContent>
         </Card>
@@ -488,94 +486,28 @@ function SocialStatsStep() {
                   <Input type="number" placeholder="e.g. 15000" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="flex items-center gap-1">
-                    Views (30 days)
-                    <span className="text-[10px] font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">Estimate</span>
-                  </Label>
+                  <Label>Views (30 days)</Label>
                   <Input type="number" placeholder="e.g. 10000" />
-                  <p className="text-[10px] text-muted-foreground">Self-reported estimate from your account insights</p>
                 </div>
               </div>
-
-              {/* Demographics */}
-              <AudienceDemographics platform="instagram" />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Reach (30 days)</Label>
+                  <Input type="number" placeholder="e.g. 8000" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="flex items-center gap-1">
+                    Engagement Rate
+                    <span className="text-[10px] font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded-full cursor-help" title="Self-reported estimate from your account insights">Estimate</span>
+                  </Label>
+                  <Input type="number" placeholder="e.g. 3.2" />
+                </div>
+              </div>
+              <p className="text-[10px] text-muted-foreground">Engagement rate is a self-reported estimate from your account insights</p>
             </CardContent>
           </CollapsibleContent>
         </Card>
       </Collapsible>
-    </div>
-  );
-}
-
-/* ─── Audience Demographics (redesigned, shared by both platforms) ─── */
-function AudienceDemographics({ platform: _platform }: { platform: string }) {
-  return (
-    <div className="border-t pt-4 space-y-4">
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-        Audience Demographics
-      </p>
-
-      {/* Top Countries with percentages */}
-      <div className="space-y-2">
-        <Label className="text-xs">Top Countries</Label>
-        <div className="space-y-2">
-          {[1, 2].map((num) => (
-            <div key={num} className="flex items-center gap-2">
-              <div className="flex-1">
-                <Select>
-                  <SelectTrigger className="h-9"><SelectValue placeholder={`Country ${num}`} /></SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-20">
-                <Input type="number" placeholder="%" className="h-9 text-center" min={0} max={100} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Gender */}
-      <div className="space-y-2">
-        <Label className="text-xs">Top Gender</Label>
-        <div className="flex items-center gap-2">
-          <div className="flex-1">
-            <Select>
-              <SelectTrigger className="h-9"><SelectValue placeholder="Gender" /></SelectTrigger>
-              <SelectContent>
-                {GENDERS.map((g) => (<SelectItem key={g} value={g}>{g}</SelectItem>))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-20">
-            <Input type="number" placeholder="%" className="h-9 text-center" min={0} max={100} />
-          </div>
-        </div>
-      </div>
-
-      {/* Age Ranges */}
-      <div className="space-y-2">
-        <Label className="text-xs">Top Age Ranges</Label>
-        <div className="space-y-2">
-          {[1, 2].map((num) => (
-            <div key={num} className="flex items-center gap-2">
-              <div className="flex-1">
-                <Select>
-                  <SelectTrigger className="h-9"><SelectValue placeholder={`Age range ${num}`} /></SelectTrigger>
-                  <SelectContent>
-                    {AGE_RANGES.map((a) => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-20">
-                <Input type="number" placeholder="%" className="h-9 text-center" min={0} max={100} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
@@ -592,13 +524,6 @@ function PastPostsStep({
   removePost: (id: string) => void;
   updatePost: (id: string, field: keyof PostEntry, value: string) => void;
 }) {
-  const platformLabels: Record<string, string> = {
-    tiktok: 'TikTok',
-    instagram_reel: 'IG Reel',
-    instagram_carousel: 'IG Carousel',
-    instagram_story: 'IG Story',
-  };
-
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
@@ -624,9 +549,6 @@ function PastPostsStep({
                 <SelectItem value="instagram_story">IG Story</SelectItem>
               </SelectContent>
             </Select>
-            <Badge variant="secondary" className="text-[10px] px-1.5">
-              {platformLabels[post.platform] || post.platform}
-            </Badge>
             <div className="flex-1" />
             {posts.length > 1 && (
               <button type="button" onClick={() => removePost(post.id)} className="text-muted-foreground hover:text-destructive transition-colors">
@@ -667,6 +589,24 @@ function PastPostsStep({
               >
                 Paste link
               </button>
+            </div>
+          )}
+
+          {/* Link preview */}
+          {post.type === 'link' && post.link.trim() && (
+            <div className="ml-7 flex items-center gap-3 p-2.5 bg-muted rounded-lg">
+              <div className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
+                post.platform.includes('tiktok') ? 'bg-black' : 'bg-gradient-to-br from-purple-600 to-pink-500'
+              }`}>
+                <span className="text-white text-[9px] font-bold">
+                  {post.platform.includes('tiktok') ? 'TK' : 'IG'}
+                </span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-medium text-muted-foreground capitalize">{post.platform.replace(/_/g, ' ')}</p>
+                <p className="text-xs truncate">{post.link}</p>
+              </div>
+              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
             </div>
           )}
 

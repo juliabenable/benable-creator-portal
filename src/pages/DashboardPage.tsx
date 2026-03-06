@@ -61,14 +61,14 @@ export default function DashboardPage() {
     <div className="max-w-lg mx-auto px-4 py-6 space-y-6">
       {/* Status Banner */}
       {creatorStatus === 'pending' && (
-        <Card className="border-amber-200 bg-amber-50">
+        <Card className="border-pink-200 bg-pink-50">
           <CardContent className="flex items-center gap-4 py-5">
-            <div className="icon-container w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
-              <Clock className="w-6 h-6 text-amber-600" />
+            <div className="icon-container w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center shrink-0">
+              <Clock className="w-6 h-6 text-pink-600" />
             </div>
             <div>
-              <h2 className="font-semibold text-amber-900">Application Under Review</h2>
-              <p className="text-sm text-amber-700 mt-0.5">
+              <h2 className="font-semibold text-pink-900">Application Under Review</h2>
+              <p className="text-sm text-pink-700 mt-0.5">
                 We're reviewing your application. You'll be notified once you're accepted.
               </p>
             </div>

@@ -61,9 +61,7 @@ import {
   Rocket,
   Image,
   HelpCircle,
-  MessageSquare,
   Sparkles,
-  Info,
   Home,
   Edit3,
   Check,
@@ -239,6 +237,17 @@ function InterestCheckStep({ campaign }: StepProps) {
           <CardTitle className="text-base">Campaign Overview</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Brand info */}
+          <div className="flex items-center gap-3 pb-3 border-b">
+            <BrandAvatar campaign={campaign} size="md" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">{campaign.brandName}</p>
+              <p className="text-xs text-muted-foreground leading-snug mt-0.5">
+                Clean, plant-based skincare rooted in nature. Crafted with sustainably sourced botanicals for radiant, healthy skin.
+              </p>
+            </div>
+          </div>
+
           <p className="text-sm text-muted-foreground">{campaign.description}</p>
 
           <Separator />
@@ -341,7 +350,7 @@ function InvitationStep({ campaign }: StepProps) {
   const { setCampaignStep } = useCreator();
   const briefEndRef = useRef<HTMLDivElement>(null);
   const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
-  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+  const [showCommitDialog, setShowCommitDialog] = useState(false);
 
   function handleBriefScroll(e: React.UIEvent<HTMLDivElement>) {
     const el = e.currentTarget;
@@ -353,17 +362,12 @@ function InvitationStep({ campaign }: StepProps) {
 
   return (
     <div className="space-y-4">
-      <Card className="border-amber-200 bg-amber-50">
-        <CardContent className="py-2.5">
-          <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="w-5 h-5 text-amber-600" />
-            <span className="font-semibold text-amber-900 text-sm">Action Required</span>
-          </div>
-          <p className="text-xs text-amber-800">
-            Read the full campaign brief below and scroll to the end to accept.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-800">
+          Read the full campaign brief below and scroll to the end to accept.
+        </p>
+      </div>
 
       {/* Full Campaign Brief — Scrollable like T&C */}
       <Card>
@@ -452,45 +456,6 @@ function InvitationStep({ campaign }: StepProps) {
               </ul>
             </div>
 
-            {/* Accept section — inside the brief scroll area */}
-            <Separator />
-
-            <div className={`space-y-3 transition-opacity ${hasScrolledToEnd ? 'opacity-100' : 'opacity-50'}`}>
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={hasAcceptedTerms}
-                  onChange={(e) => setHasAcceptedTerms(e.target.checked)}
-                  disabled={!hasScrolledToEnd}
-                  className="mt-1 h-4 w-4 rounded border-border text-primary accent-primary"
-                />
-                <span className="text-xs text-muted-foreground leading-relaxed">
-                  I commit to delivering content as described in the brief by{' '}
-                  <strong className="text-foreground">{campaign.contentDueDate}</strong>
-                  {campaign.postingSchedule === 'asap'
-                    ? ' and publishing as soon as my content is approved'
-                    : campaign.postingSchedule === 'specific_date'
-                      ? <> and publishing on <strong className="text-foreground">{campaign.postingDate || campaign.publishWindowStart}</strong></>
-                      : <> and publishing between{' '}<strong className="text-foreground">{campaign.publishWindowStart}</strong> and{' '}<strong className="text-foreground">{campaign.publishWindowEnd}</strong></>
-                  }. This is a binding agreement with{' '}
-                  {campaign.brandName}.
-                </span>
-              </label>
-
-              <Button
-                className="w-full h-12 text-base font-semibold"
-                disabled={!hasScrolledToEnd || !hasAcceptedTerms}
-                onClick={() => {
-                  window.scrollTo(0, 0);
-                  setCampaignStep(campaign.id, 'product_phase');
-                  toast.success('Campaign accepted! Check your product details.');
-                }}
-              >
-                <ShieldCheck className="w-5 h-5 mr-2" />
-                {!hasScrolledToEnd ? 'Read brief to accept' : !hasAcceptedTerms ? 'Check the box above to accept' : 'Accept & Commit'}
-              </Button>
-            </div>
-
             <div ref={briefEndRef} className="pt-2">
               {!hasScrolledToEnd && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -502,6 +467,55 @@ function InvitationStep({ campaign }: StepProps) {
           </div>
         </CardContent>
       </Card>
+
+      <StickyCTA>
+        <Button
+          className="w-full h-12 text-base font-semibold"
+          disabled={!hasScrolledToEnd}
+          onClick={() => setShowCommitDialog(true)}
+        >
+          <ShieldCheck className="w-5 h-5 mr-2" />
+          {hasScrolledToEnd ? 'Accept & Commit' : 'Read brief to accept'}
+        </Button>
+      </StickyCTA>
+
+      {/* Commitment confirmation dialog — double acceptance */}
+      <AlertDialog open={showCommitDialog} onOpenChange={setShowCommitDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Your Commitment</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <p>
+                  By accepting, you commit to delivering content as described in the brief by{' '}
+                  <strong className="text-foreground">{campaign.contentDueDate}</strong>
+                  {campaign.postingSchedule === 'asap'
+                    ? ' and publishing as soon as your content is approved'
+                    : campaign.postingSchedule === 'specific_date'
+                      ? <> and publishing on <strong className="text-foreground">{campaign.postingDate || campaign.publishWindowStart}</strong></>
+                      : <> and publishing between{' '}<strong className="text-foreground">{campaign.publishWindowStart}</strong> and{' '}<strong className="text-foreground">{campaign.publishWindowEnd}</strong></>
+                  }.
+                </p>
+                <p className="font-medium text-foreground">This is a binding agreement with {campaign.brandName}.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go Back</AlertDialogCancel>
+            <Button
+              onClick={() => {
+                setShowCommitDialog(false);
+                window.scrollTo(0, 0);
+                setCampaignStep(campaign.id, 'product_phase');
+                toast.success('Campaign accepted! Check your product details.');
+              }}
+            >
+              <ShieldCheck className="w-4 h-4 mr-2" />
+              I Commit
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -518,19 +532,14 @@ function ProductPhaseStep({ campaign }: StepProps) {
 
   return (
     <div className="space-y-4">
-      <Card className="border-amber-200 bg-amber-50">
-        <CardContent className="py-2.5">
-          <div className="flex items-center gap-2 mb-1">
-            <Gift className="w-5 h-5 text-amber-600" />
-            <span className="font-semibold text-amber-900 text-sm">Action Required</span>
-          </div>
-          <p className="text-xs text-amber-800">
-            {hasProductChoice
-              ? 'Choose your product, confirm your shipping address, then use your product code to place your order.'
-              : 'Confirm your shipping address, then use your product code to place your order.'}
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+        <Gift className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-800">
+          {hasProductChoice
+            ? 'Choose your product, confirm address, and use your code to order.'
+            : 'Confirm your address, then use your product code to place your order.'}
+        </p>
+      </div>
 
       {/* Product Choice — shown when brand offers multiple products */}
       {hasProductChoice && (
@@ -542,8 +551,8 @@ function ProductPhaseStep({ campaign }: StepProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-muted-foreground">
-              {campaign.brandName} is offering you a choice between products. Select the one you'd like to feature in your content.
+            <p className="text-xs text-muted-foreground -mt-1">
+              {campaign.brandName} is offering you a choice. Select the one you'd like to feature.
             </p>
             <div className="space-y-2">
               {campaign.productOptions!.map((option) => {
@@ -722,12 +731,9 @@ function ProductPhaseStep({ campaign }: StepProps) {
             </div>
           </a>
 
-          <div className="flex items-start gap-2.5 p-3 bg-blue-50 rounded-lg">
-            <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-            <p className="text-xs text-blue-700">
-              Use your product code at checkout. Add products to your cart, enter the code in the promo/gift code field, and complete your order.
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground">
+            Use your product code at checkout. Add products to your cart, enter the code in the promo/gift code field, and complete your order.
+          </p>
 
         </CardContent>
       </Card>
@@ -764,17 +770,12 @@ function OrderPlacedStep({ campaign }: StepProps) {
 
   return (
     <div className="space-y-4">
-      <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="py-2.5">
-          <div className="flex items-center gap-2 mb-1">
-            <Clock className="w-5 h-5 text-blue-600" />
-            <span className="font-semibold text-blue-900 text-sm">Waiting for Delivery</span>
-          </div>
-          <p className="text-xs text-blue-800">
-            Your order has been placed. Once the product arrives, mark it as received below.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200">
+        <Clock className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+        <p className="text-xs text-blue-800">
+          Your order has been placed. Mark it as received once the product arrives.
+        </p>
+      </div>
 
       <Card>
         <CardContent className="py-6 text-center">
@@ -809,17 +810,12 @@ function OrderReceivedStep({ campaign }: StepProps) {
 
   return (
     <div className="space-y-4">
-      <Card className="border-success/20 bg-success/5">
-        <CardContent className="py-2.5">
-          <div className="flex items-center gap-2 mb-1">
-            <CheckCircle2 className="w-5 h-5 text-success" />
-            <span className="font-semibold text-sm">Product Received!</span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Great! Now it's time to create your content. Review the requirements and get started.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-success/5 border border-success/20">
+        <CheckCircle2 className="w-4 h-4 text-success shrink-0 mt-0.5" />
+        <p className="text-xs text-muted-foreground">
+          <strong className="text-foreground">Product received!</strong> Time to create your content. Review the requirements below.
+        </p>
+      </div>
 
       <Card>
         <CardHeader className="pb-3">
@@ -941,6 +937,13 @@ function ContentUploadStep({ campaign }: StepProps) {
     Record<string, { label: string; ok: boolean }[]> | null
   >(null);
 
+  function addLink() {
+    setLinks((prev) => [
+      ...prev,
+      { id: `link-${Date.now()}`, platform: 'TikTok', type: 'link' as const, url: '', imageMode: false },
+    ]);
+  }
+
   function removeLink(id: string) {
     if (links.length <= 1) return;
     setLinks((prev) => prev.filter((l) => l.id !== id));
@@ -982,31 +985,12 @@ function ContentUploadStep({ campaign }: StepProps) {
 
   return (
     <div className="space-y-4">
-      <Card className="border-amber-200 bg-amber-50">
-        <CardContent className="py-2.5">
-          <div className="flex items-center gap-2 mb-1">
-            <Upload className="w-5 h-5 text-amber-600" />
-            <span className="font-semibold text-amber-900 text-sm">Action Required</span>
-          </div>
-          <p className="text-xs text-amber-800">
-            Upload your draft content for review before publishing. Content is due by{' '}
-            <strong>{campaign.contentDueDate}</strong>.
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* DO NOT PUBLISH warning */}
-      <Card className="border-red-200 bg-red-50">
-        <CardContent className="py-3">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-red-800">
-              <strong>Do not publish your content yet.</strong> All content must be reviewed and
-              approved before going live. Submit your draft links below and we'll get back to you.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+        <Upload className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <p className="text-xs text-amber-800">
+          Submit drafts for review by <strong>{campaign.contentDueDate}</strong>. Do not publish — content must be approved first.
+        </p>
+      </div>
 
       {/* Collapsible brief for reference */}
       <CampaignBriefCollapsible campaign={campaign} />
@@ -1020,7 +1004,7 @@ function ContentUploadStep({ campaign }: StepProps) {
       </div>
 
       {/* Flat deliverable list — each deliverable is its own card with inline compliance */}
-      {links.map((link, idx) => {
+      {links.map((link) => {
         const checks = preCheckResults?.[link.id];
         const hasIssues = checks?.some((c) => !c.ok);
 
@@ -1030,9 +1014,8 @@ function ContentUploadStep({ campaign }: StepProps) {
               {/* Header row */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-muted-foreground">{idx + 1}.</span>
                   <Select value={link.platform} onValueChange={(v) => updateLink(link.id, 'platform', v)}>
-                    <SelectTrigger className="h-8 w-[120px] text-xs"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="h-8 w-[140px] text-xs"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {CONTENT_PLATFORMS.map((p) => (
                         <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
@@ -1100,6 +1083,20 @@ function ContentUploadStep({ campaign }: StepProps) {
         );
       })}
 
+      {/* Add another deliverable — only before pre-check */}
+      {!preCheckResults && (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full"
+          onClick={addLink}
+        >
+          <Plus className="w-4 h-4 mr-1.5" />
+          Add Another Deliverable
+        </Button>
+      )}
+
       {/* Error message if compliance has issues */}
       {preCheckResults && !allPassed && (
         <p className="text-xs text-red-600 font-medium px-1">
@@ -1154,7 +1151,7 @@ function ContentReviewStep({ campaign }: StepProps) {
           <Clock className="w-12 h-12 text-blue-500 mx-auto mb-3" />
           <p className="font-semibold text-lg">Waiting for Review</p>
           <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-            Your content has been submitted and is being reviewed. This usually takes 1-3 business days.
+            Your content has been submitted and is being reviewed. This usually takes 1-3 business days. We'll email you when it's ready.
           </p>
           <div className="flex items-center gap-2 justify-center mt-4 px-4 py-2.5 bg-red-50 rounded-lg">
             <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
@@ -1208,43 +1205,32 @@ function ComplianceFeedbackStep({ campaign }: StepProps) {
 
   return (
     <div className="space-y-4">
-      <Card className="border-red-200 bg-red-50">
-        <CardContent className="py-2.5">
-          <div className="flex items-center gap-2 mb-1">
-            <AlertTriangle className="w-5 h-5 text-red-600" />
-            <span className="font-semibold text-red-900 text-sm">Changes Needed</span>
-          </div>
-          <p className="text-xs text-red-800">
-            Your content needs some adjustments before it can be approved. Review the feedback
-            for each deliverable below.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200">
+        <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+        <p className="text-xs text-red-800">
+          <strong>Changes needed.</strong> Review the feedback for each deliverable and resubmit.
+        </p>
+      </div>
 
-      {/* Reviewer Notes */}
+      {/* Reviewer Notes — speech bubble style */}
       {campaign.complianceNotes && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-primary" />
-              Reviewer Feedback
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-primary">JM</span>
-              </div>
-              <div>
-                <p className="text-sm font-semibold">Joanna Martinez</p>
-                <p className="text-[11px] text-muted-foreground">Content Specialist</p>
-              </div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-purple-400 flex items-center justify-center shrink-0">
+              <span className="text-[10px] font-bold text-white">JM</span>
             </div>
-            <div className="bg-muted rounded-lg p-3 text-sm italic">
-              "{campaign.complianceNotes}"
+            <div>
+              <p className="text-sm font-semibold leading-tight">Joanna Martinez</p>
+              <p className="text-[10px] text-muted-foreground">Content Specialist</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="ml-10 relative">
+            <div className="absolute -left-2 top-3 w-0 h-0 border-t-[6px] border-t-transparent border-r-[8px] border-r-primary/10 border-b-[6px] border-b-transparent" />
+            <div className="bg-primary/5 rounded-2xl rounded-tl-sm px-4 py-3">
+              <p className="text-sm leading-relaxed">"{campaign.complianceNotes}"</p>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Per-deliverable feedback with drawers */}
@@ -1252,7 +1238,7 @@ function ComplianceFeedbackStep({ campaign }: StepProps) {
         const needsWork = del.items.some((item) => item.status !== 'approved');
         return (
           <Collapsible key={del.platform} defaultOpen={needsWork}>
-            <Card className={needsWork ? 'border-amber-200' : 'border-success/20'}>
+            <Card className={needsWork ? '' : 'border-success/20'}>
               <CollapsibleTrigger asChild>
                 <button className="w-full flex items-center justify-between px-5 py-3 text-sm font-medium hover:bg-muted/50 transition-colors rounded-xl">
                   <span className="flex items-center gap-2">
@@ -1408,53 +1394,51 @@ function ContentApprovedStep({ campaign }: StepProps) {
 
   return (
     <div className="space-y-4">
-      {/* Celebration */}
+      {/* Content Approved + Posting Schedule — combined card */}
       <Card className="border-success/20 bg-success/5">
-        <CardContent className="py-5 text-center">
-          <CheckCircle2 className="w-12 h-12 text-success mx-auto mb-3" />
-          <h3 className="font-semibold text-lg">Content Approved!</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Your content has been approved by {campaign.brandName}.
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Posting Schedule Info */}
-      <Card className="bg-muted/50">
-        <CardContent className="py-3">
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="w-4 h-4 text-primary shrink-0" />
-            <span className="font-medium">Posting Schedule:</span>
-            {scheduleType === 'asap' && (
-              <span className="text-muted-foreground">Post as soon as possible</span>
-            )}
-            {scheduleType === 'specific_date' && (
-              <span className="text-muted-foreground">
-                Post on <strong className="text-foreground">{campaign.postingDate || campaign.publishWindowStart}</strong>
-              </span>
-            )}
-            {scheduleType === 'window' && (
-              <span className="text-muted-foreground">
-                Post between <strong className="text-foreground">{campaign.publishWindowStart}</strong> and <strong className="text-foreground">{campaign.publishWindowEnd}</strong>
-              </span>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Publish Window Status */}
-      {isPreWindow ? (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="py-5 text-center">
-            <Clock className="w-10 h-10 text-blue-600 mx-auto mb-3" />
-            <h3 className="font-semibold text-blue-900">Publish Window Opens Soon</h3>
-            <p className="text-sm text-blue-700 mt-1">
-              Your publish window opens on <strong>{campaign.publishWindowStart}</strong>.
-              We'll notify you when it's time to post!
+        <CardContent className="py-5 text-center space-y-3">
+          <CheckCircle2 className="w-10 h-10 text-success mx-auto" />
+          <div>
+            <h3 className="font-semibold text-lg">Content Approved!</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Your content has been approved by {campaign.brandName}.
             </p>
-          </CardContent>
-        </Card>
-      ) : (
+          </div>
+          <Separator />
+          <div className="flex items-start gap-2 text-sm text-left">
+            <Calendar className="w-4 h-4 text-success shrink-0 mt-0.5" />
+            <div>
+              <span className="font-medium">Posting Schedule: </span>
+              {scheduleType === 'asap' && (
+                <span className="text-muted-foreground">Post as soon as possible</span>
+              )}
+              {scheduleType === 'specific_date' && (
+                <span className="text-muted-foreground">
+                  Post on <strong className="text-foreground">{campaign.postingDate || campaign.publishWindowStart}</strong>
+                </span>
+              )}
+              {scheduleType === 'window' && (
+                <span className="text-muted-foreground">
+                  Post between{' '}
+                  <strong className="text-foreground">{campaign.publishWindowStart}</strong>
+                  {' '}and{' '}
+                  <strong className="text-foreground">{campaign.publishWindowEnd}</strong>
+                </span>
+              )}
+            </div>
+          </div>
+          {isPreWindow && (
+            <div className="flex items-center gap-2 justify-center px-3 py-2 bg-blue-50 rounded-lg mt-2">
+              <Clock className="w-4 h-4 text-blue-600 shrink-0" />
+              <p className="text-xs text-blue-700 font-medium">
+                Window opens on {campaign.publishWindowStart} — we'll notify you!
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {!isPreWindow && (
         /* "Publish your content now" CTA when ready */
         <Card className="border-primary bg-gradient-to-br from-primary/10 to-primary/5">
           <CardContent className="py-6 text-center">
@@ -1492,12 +1476,14 @@ function ContentApprovedStep({ campaign }: StepProps) {
                 <CardContent className="py-3 space-y-2">
                   <div className="flex items-center gap-2">
                     {isExtra ? (
-                      <Input
-                        placeholder="Platform name..."
-                        value={link.platform}
-                        onChange={(e) => updateLink(link.id, 'platform', e.target.value)}
-                        className="h-7 text-sm font-medium w-36 px-2"
-                      />
+                      <Select value={link.platform} onValueChange={(v) => updateLink(link.id, 'platform', v)}>
+                        <SelectTrigger className="h-7 w-36 text-xs"><SelectValue placeholder="Platform" /></SelectTrigger>
+                        <SelectContent>
+                          {CONTENT_PLATFORMS.map((p) => (
+                            <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     ) : (
                       <span className="text-sm font-medium">{link.platform}</span>
                     )}

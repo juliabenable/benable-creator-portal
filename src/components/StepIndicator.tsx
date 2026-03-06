@@ -27,7 +27,9 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
   const subProgress = getSubStepProgress(currentStep);
   const totalSteps = CAMPAIGN_STEPS.length;
   // Overall progress: completed steps + current step partial progress
-  const overallProgress = ((activeIndex + subProgress) / totalSteps) * 100;
+  // When completed (last step), show 100%
+  const isCompleted = currentStep === 'completed';
+  const overallProgress = isCompleted ? 100 : ((activeIndex + subProgress) / totalSteps) * 100;
 
   return (
     <div className="space-y-3">
@@ -41,7 +43,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
         </div>
         <div className="flex justify-between mt-1">
           <span className="text-[10px] text-muted-foreground">
-            Step {activeIndex + 1} of {totalSteps}
+            Step {isCompleted ? totalSteps : activeIndex + 1} of {totalSteps}
           </span>
           <span className="text-[10px] font-medium text-primary">
             {Math.round(overallProgress)}%
@@ -52,8 +54,9 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
       {/* Step circles */}
       <div className="flex items-center justify-between w-full overflow-hidden">
         {CAMPAIGN_STEPS.map((step, i) => {
-          const isCompleted = i < activeIndex;
-          const isActive = i === activeIndex;
+          const allDone = currentStep === 'completed';
+          const isCompleted = allDone || i < activeIndex;
+          const isActive = !allDone && i === activeIndex;
 
           return (
             <div key={step.key} className="flex items-center flex-1 last:flex-none">
