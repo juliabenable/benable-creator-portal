@@ -17,6 +17,8 @@ function getSubStepProgress(step: CampaignStep): number {
       return 0.33;
     case 'compliance_feedback':
       return 0.66;
+    case 'content_approved':
+      return 0.8; // Show ~80% progress at this stage
     default:
       return 0;
   }

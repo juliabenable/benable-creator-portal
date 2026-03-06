@@ -532,15 +532,6 @@ function ProductPhaseStep({ campaign }: StepProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
-        <Gift className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-        <p className="text-xs text-amber-800">
-          {hasProductChoice
-            ? 'Choose your product, confirm address, and use your code to order.'
-            : 'Confirm your address, then use your product code to place your order.'}
-        </p>
-      </div>
-
       {/* Product Choice — shown when brand offers multiple products */}
       {hasProductChoice && (
         <Card>
@@ -694,11 +685,14 @@ function ProductPhaseStep({ campaign }: StepProps) {
 
       {/* Product Code + Checkout Instructions */}
       <Card className={!productChosen ? 'opacity-50 pointer-events-none' : ''}>
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-1">
           <CardTitle className="text-base flex items-center gap-2">
             <Gift className="w-4 h-4 text-primary" />
             Your Product Code
           </CardTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Use your product code at checkout. Add products to your cart, enter the code in the promo/gift code field, and complete your order.
+          </p>
         </CardHeader>
         <CardContent className="space-y-3">
           {campaign.productCode && (
@@ -730,11 +724,6 @@ function ProductPhaseStep({ campaign }: StepProps) {
               <p className="text-[11px] text-muted-foreground">Shop and redeem your code at the brand's website</p>
             </div>
           </a>
-
-          <p className="text-xs text-muted-foreground">
-            Use your product code at checkout. Add products to your cart, enter the code in the promo/gift code field, and complete your order.
-          </p>
-
         </CardContent>
       </Card>
 
@@ -770,19 +759,12 @@ function OrderPlacedStep({ campaign }: StepProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200">
-        <Clock className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-        <p className="text-xs text-blue-800">
-          Your order has been placed. Mark it as received once the product arrives.
-        </p>
-      </div>
-
       <Card>
-        <CardContent className="py-6 text-center">
-          <Package className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-          <p className="font-medium">Product is on its way</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Please let us know as soon as you receive it.
+        <CardContent className="py-6 text-center space-y-2">
+          <Package className="w-12 h-12 text-muted-foreground mx-auto mb-1" />
+          <p className="font-semibold text-lg">Product is on its way</p>
+          <p className="text-sm text-muted-foreground">
+            Your order has been placed. Please let us know as soon as you receive it.
           </p>
         </CardContent>
       </Card>
@@ -944,11 +926,6 @@ function ContentUploadStep({ campaign }: StepProps) {
     ]);
   }
 
-  function removeLink(id: string) {
-    if (links.length <= 1) return;
-    setLinks((prev) => prev.filter((l) => l.id !== id));
-  }
-
   function updateLink(id: string, field: string, value: string | boolean) {
     setLinks((prev) => prev.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
   }
@@ -1028,11 +1005,6 @@ function ContentUploadStep({ campaign }: StepProps) {
                       : <Badge className="bg-success/10 text-success text-[10px] border-0">Pass</Badge>
                   )}
                 </div>
-                {links.length > 1 && (
-                  <button onClick={() => removeLink(link.id)} className="text-muted-foreground hover:text-destructive transition-colors">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
               </div>
 
               {/* Content input — stacked, not side by side */}
@@ -1040,6 +1012,17 @@ function ContentUploadStep({ campaign }: StepProps) {
                 <div className="flex items-center gap-2 h-9 px-3 border rounded-md bg-muted/50 text-sm text-muted-foreground cursor-pointer">
                   <Image className="w-4 h-4" />
                   <span>Upload image</span>
+                </div>
+              ) : link.url.trim() ? (
+                /* Show uploaded link preview when link is entered */
+                <div className="space-y-1.5">
+                  <ContentLinkPreview platform={link.platform} url={link.url} />
+                  <button
+                    onClick={() => updateLink(link.id, 'url', '')}
+                    className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                  >
+                    <Edit3 className="w-3 h-3" /> Edit link
+                  </button>
                 </div>
               ) : (
                 <Input
@@ -1049,12 +1032,14 @@ function ContentUploadStep({ campaign }: StepProps) {
                   className="h-9"
                 />
               )}
-              <button
-                onClick={() => updateLink(link.id, 'imageMode', !link.imageMode)}
-                className="text-[11px] text-primary hover:underline"
-              >
-                {link.imageMode ? 'Switch to link' : 'Upload an image instead'}
-              </button>
+              {!link.url.trim() && (
+                <button
+                  onClick={() => updateLink(link.id, 'imageMode', !link.imageMode)}
+                  className="text-[11px] text-primary hover:underline"
+                >
+                  {link.imageMode ? 'Switch to link' : 'Upload an image instead'}
+                </button>
+              )}
 
               {/* Inline compliance check results for THIS deliverable */}
               {checks && (
@@ -1212,25 +1197,27 @@ function ComplianceFeedbackStep({ campaign }: StepProps) {
         </p>
       </div>
 
-      {/* Reviewer Notes — speech bubble style */}
+      {/* Reviewer Notes — speech bubble style within white tile */}
       {campaign.complianceNotes && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-purple-400 flex items-center justify-center shrink-0">
-              <span className="text-[10px] font-bold text-white">JM</span>
+        <Card>
+          <CardContent className="py-4 space-y-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-400 to-purple-400 flex items-center justify-center shrink-0">
+                <span className="text-[10px] font-bold text-white">JM</span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold leading-tight">Joanna Martinez</p>
+                <p className="text-[10px] text-muted-foreground">Content Specialist</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold leading-tight">Joanna Martinez</p>
-              <p className="text-[10px] text-muted-foreground">Content Specialist</p>
+            <div className="ml-10 relative">
+              <div className="absolute -left-2 top-3 w-0 h-0 border-t-[6px] border-t-transparent border-r-[8px] border-r-primary/10 border-b-[6px] border-b-transparent" />
+              <div className="bg-primary/5 rounded-2xl rounded-tl-sm px-4 py-3">
+                <p className="text-sm leading-relaxed">"{campaign.complianceNotes}"</p>
+              </div>
             </div>
-          </div>
-          <div className="ml-10 relative">
-            <div className="absolute -left-2 top-3 w-0 h-0 border-t-[6px] border-t-transparent border-r-[8px] border-r-primary/10 border-b-[6px] border-b-transparent" />
-            <div className="bg-primary/5 rounded-2xl rounded-tl-sm px-4 py-3">
-              <p className="text-sm leading-relaxed">"{campaign.complianceNotes}"</p>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Per-deliverable feedback with drawers */}
@@ -1301,12 +1288,24 @@ function ComplianceFeedbackStep({ campaign }: StepProps) {
                   {needsWork && (
                     <div className="space-y-1.5 pt-2 border-t">
                       <Label className="text-xs">Updated {del.platform} Link</Label>
-                      <Input
-                        placeholder="Paste updated content link..."
-                        value={resubLinks[del.platform] || ''}
-                        onChange={(e) => setResubLinks((prev) => ({ ...prev, [del.platform]: e.target.value }))}
-                        className="h-9"
-                      />
+                      {resubLinks[del.platform]?.trim() ? (
+                        <div className="space-y-1.5">
+                          <ContentLinkPreview platform={del.platform} url={resubLinks[del.platform]} />
+                          <button
+                            onClick={() => setResubLinks((prev) => ({ ...prev, [del.platform]: '' }))}
+                            className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                          >
+                            <Edit3 className="w-3 h-3" /> Edit link
+                          </button>
+                        </div>
+                      ) : (
+                        <Input
+                          placeholder="Paste updated content link..."
+                          value={resubLinks[del.platform] || ''}
+                          onChange={(e) => setResubLinks((prev) => ({ ...prev, [del.platform]: e.target.value }))}
+                          className="h-9"
+                        />
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -1395,7 +1394,7 @@ function ContentApprovedStep({ campaign }: StepProps) {
   return (
     <div className="space-y-4">
       {/* Content Approved + Posting Schedule — combined card */}
-      <Card className="border-success/20 bg-success/5">
+      <Card>
         <CardContent className="py-5 text-center space-y-3">
           <CheckCircle2 className="w-10 h-10 text-success mx-auto" />
           <div>
@@ -1406,31 +1405,28 @@ function ContentApprovedStep({ campaign }: StepProps) {
           </div>
           <Separator />
           <div className="flex items-start gap-2 text-sm text-left">
-            <Calendar className="w-4 h-4 text-success shrink-0 mt-0.5" />
+            <Calendar className="w-4 h-4 text-primary shrink-0 mt-0.5" />
             <div>
-              <span className="font-medium">Posting Schedule: </span>
+              <p className="font-medium">Posting Schedule</p>
               {scheduleType === 'asap' && (
-                <span className="text-muted-foreground">Post as soon as possible</span>
+                <p className="text-muted-foreground mt-0.5">Post as soon as possible</p>
               )}
               {scheduleType === 'specific_date' && (
-                <span className="text-muted-foreground">
+                <p className="text-muted-foreground mt-0.5">
                   Post on <strong className="text-foreground">{campaign.postingDate || campaign.publishWindowStart}</strong>
-                </span>
+                </p>
               )}
               {scheduleType === 'window' && (
-                <span className="text-muted-foreground">
-                  Post between{' '}
-                  <strong className="text-foreground">{campaign.publishWindowStart}</strong>
-                  {' '}and{' '}
-                  <strong className="text-foreground">{campaign.publishWindowEnd}</strong>
-                </span>
+                <p className="text-muted-foreground mt-0.5">
+                  Post between <strong className="text-foreground">{campaign.publishWindowStart}</strong> and <strong className="text-foreground">{campaign.publishWindowEnd}</strong>
+                </p>
               )}
             </div>
           </div>
           {isPreWindow && (
-            <div className="flex items-center gap-2 justify-center px-3 py-2 bg-blue-50 rounded-lg mt-2">
-              <Clock className="w-4 h-4 text-blue-600 shrink-0" />
-              <p className="text-xs text-blue-700 font-medium">
+            <div className="flex items-center gap-2 justify-center px-3 py-2 bg-muted rounded-lg mt-2">
+              <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground font-medium">
                 Window opens on {campaign.publishWindowStart} — we'll notify you!
               </p>
             </div>

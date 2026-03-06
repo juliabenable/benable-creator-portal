@@ -69,8 +69,8 @@ export default function Layout() {
       {/* Top Header */}
       <header className="sticky top-0 z-40 bg-card border-b px-4 py-3 flex items-center justify-between">
         <button onClick={() => navigate('/')} className="flex items-center gap-2">
-          <div className="logo-mark w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">B</span>
+          <div className="logo-mark w-7 h-7 rounded-lg bg-gradient-to-br from-[#7A5CFA] to-[#47B3FF] flex items-center justify-center">
+            <span className="text-white font-bold text-sm">B</span>
           </div>
           <span className="brand-name font-semibold text-lg tracking-tight">benable</span>
         </button>

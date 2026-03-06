@@ -376,9 +376,10 @@
   box-shadow: 0 0 0 2px rgba(122, 92, 250, 0.15);
 }
 
-/* Logo: clean brand purple */
+/* Logo: gradient from purple to blue */
 [data-theme="soft"] .logo-mark {
   border-radius: 0.5rem;
+  background: linear-gradient(135deg, #7A5CFA, #47B3FF) !important;
 }
 
 /* Brand name: clean, medium weight */
@@ -412,15 +413,33 @@
   background-color: rgba(241, 238, 254, 0.5);
 }
 
-/* Icon containers: subtle brand tint */
+/* Icon containers: gradient tint for diversity */
 [data-theme="soft"] .icon-container {
-  background: rgba(122, 92, 250, 0.08);
+  background: linear-gradient(135deg, rgba(122, 92, 250, 0.08), rgba(71, 179, 255, 0.08));
   border-radius: 0.75rem;
 }
 
 /* Step indicator active pulse: brand purple */
 [data-theme="soft"] .animate-ping {
   border-color: rgba(122, 92, 250, 0.4) !important;
+}
+
+/* Progress bar: gradient instead of flat purple */
+[data-theme="soft"] .bg-primary.rounded-full.transition-all {
+  background: linear-gradient(90deg, #7A5CFA, #47B3FF) !important;
+}
+
+/* Step circles completed: use teal accent for diversity */
+[data-theme="soft"] .bg-primary.text-primary-foreground.rounded-full {
+  background: linear-gradient(135deg, #7A5CFA, #47B3FF) !important;
+}
+
+/* Primary buttons: subtle gradient for depth */
+[data-theme="soft"] button.bg-primary {
+  background: linear-gradient(135deg, #7A5CFA, #6B4DE6) !important;
+}
+[data-theme="soft"] button.bg-primary:hover {
+  background: linear-gradient(135deg, #6B4DE6, #5E3FD9) !important;
 }
 
 /* ================================================================
