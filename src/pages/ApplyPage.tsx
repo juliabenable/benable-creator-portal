@@ -21,7 +21,6 @@ import {
 import {
   User,
   MapPin,
-  BarChart3,
   LinkIcon,
   Plus,
   Trash2,
@@ -45,6 +44,7 @@ import {
   Image,
 } from 'lucide-react';
 import { useCreator } from '@/context/CreatorContext';
+import { StickyCTA } from '@/components/StickyCTA';
 import { toast } from 'sonner';
 
 const TOTAL_STEPS = 5;
@@ -198,29 +198,31 @@ export default function ApplyPage() {
       </div>
 
       {/* Navigation */}
-      <div className="flex gap-3 mt-6">
-        {step > 0 && (
-          <Button variant="outline" className="flex-1 h-12" onClick={() => setStep((s) => s - 1)}>
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
-          </Button>
+      <StickyCTA>
+        <div className="flex gap-3">
+          {step > 0 && (
+            <Button variant="outline" className="flex-1 h-12" onClick={() => setStep((s) => s - 1)}>
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Back
+            </Button>
+          )}
+          {step < TOTAL_STEPS - 1 ? (
+            <Button className="flex-1 h-12 text-base font-semibold" onClick={handleNext}>
+              {step === 0 ? "Let's Get Started" : 'Next'}
+              <ArrowRight className="w-4 h-4 ml-1" />
+            </Button>
+          ) : (
+            <Button className="flex-1 h-12 text-base font-semibold" onClick={handleSubmit}>
+              Submit Application
+            </Button>
+          )}
+        </div>
+        {step === TOTAL_STEPS - 1 && (
+          <p className="text-center text-xs text-muted-foreground mt-2">
+            We'll review your application and get back to you shortly.
+          </p>
         )}
-        {step < TOTAL_STEPS - 1 ? (
-          <Button className="flex-1 h-12 text-base font-semibold" onClick={handleNext}>
-            {step === 0 ? "Let's Get Started" : 'Next'}
-            <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        ) : (
-          <Button className="flex-1 h-12 text-base font-semibold" onClick={handleSubmit}>
-            Submit Application
-          </Button>
-        )}
-      </div>
-      {step === TOTAL_STEPS - 1 && (
-        <p className="text-center text-xs text-muted-foreground mt-3 pb-4">
-          We'll review your application and get back to you shortly.
-        </p>
-      )}
+      </StickyCTA>
     </div>
   );
 }
@@ -428,7 +430,7 @@ function SocialStatsStep() {
           <CollapsibleTrigger asChild>
             <button className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium hover:bg-muted/50 transition-colors rounded-xl">
               <span className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-primary" />
+                <span className="w-6 h-6 rounded-md bg-black flex items-center justify-center text-white text-[10px] font-bold shrink-0">TK</span>
                 TikTok Stats
               </span>
               <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${tiktokOpen ? 'rotate-180' : ''}`} />
@@ -446,8 +448,12 @@ function SocialStatsStep() {
                   <Input type="number" placeholder="e.g. 15000" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Avg. Views</Label>
+                  <Label className="flex items-center gap-1">
+                    Avg. Views
+                    <span className="text-[10px] font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">Estimate</span>
+                  </Label>
                   <Input type="number" placeholder="e.g. 5000" />
+                  <p className="text-[10px] text-muted-foreground">Self-reported estimate from your recent videos</p>
                 </div>
               </div>
 
@@ -464,7 +470,7 @@ function SocialStatsStep() {
           <CollapsibleTrigger asChild>
             <button className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium hover:bg-muted/50 transition-colors rounded-xl">
               <span className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4 text-primary" />
+                <span className="w-6 h-6 rounded-md bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">IG</span>
                 Instagram Stats
               </span>
               <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${igOpen ? 'rotate-180' : ''}`} />
@@ -476,23 +482,18 @@ function SocialStatsStep() {
                 <Label>Instagram Handle</Label>
                 <Input placeholder="@yourinstagramhandle" />
               </div>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label>Followers</Label>
-                    <Input type="number" placeholder="e.g. 15000" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>Reach</Label>
-                    <Input type="number" placeholder="e.g. 10000" />
-                  </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Followers</Label>
+                  <Input type="number" placeholder="e.g. 15000" />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Average Reel Plays</Label>
-                  <Input type="number" placeholder="e.g. 8000" />
-                  <p className="text-[11px] text-muted-foreground">
-                    Give an approximation from your recent reels
-                  </p>
+                  <Label className="flex items-center gap-1">
+                    Views (30 days)
+                    <span className="text-[10px] font-normal text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">Estimate</span>
+                  </Label>
+                  <Input type="number" placeholder="e.g. 10000" />
+                  <p className="text-[10px] text-muted-foreground">Self-reported estimate from your account insights</p>
                 </div>
               </div>
 
