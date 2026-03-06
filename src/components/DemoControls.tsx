@@ -16,7 +16,7 @@ const STATUS_OPTIONS: { value: CreatorStatus; label: string }[] = [
 
 const THEME_OPTIONS: { value: ThemeName; label: string; desc: string }[] = [
   { value: 'default', label: 'Current', desc: 'Teal, standard' },
-  { value: 'soft', label: 'A: Soft & Warm', desc: 'Coral, organic' },
+  { value: 'soft', label: 'A: Brand Refined', desc: 'Purple, clean' },
   { value: 'bold', label: 'B: Bold & Graphic', desc: 'Teal, editorial' },
   { value: 'playful', label: 'C: Airy & Playful', desc: 'Violet, bouncy' },
 ];
