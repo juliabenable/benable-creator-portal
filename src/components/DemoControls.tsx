@@ -15,10 +15,8 @@ const STATUS_OPTIONS: { value: CreatorStatus; label: string }[] = [
 ];
 
 const THEME_OPTIONS: { value: ThemeName; label: string; desc: string }[] = [
-  { value: 'default', label: 'Current', desc: 'Teal, standard' },
-  { value: 'soft', label: 'A: Brand Refined', desc: 'Purple, clean' },
-  { value: 'bold', label: 'B: Bold & Graphic', desc: 'Teal, editorial' },
-  { value: 'playful', label: 'C: Airy & Playful', desc: 'Violet, bouncy' },
+  { value: 'soft', label: 'Brand Refined', desc: 'Purple, professional' },
+  { value: 'luxe', label: 'Luxe', desc: 'Gradient, playful' },
 ];
 
 const STEP_LABELS: Record<CampaignStep, string> = {

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -21,9 +22,6 @@ import {
 import {
   User,
   MapPin,
-  LinkIcon,
-  Plus,
-  Trash2,
   Sparkles,
   ArrowLeft,
   ArrowRight,
@@ -41,14 +39,16 @@ import {
   Palette,
   Flower2,
   Sofa,
-  Image,
-  ExternalLink,
+  BookOpen,
+  PawPrint,
+  Smartphone,
+  Gift,
 } from 'lucide-react';
 import { useCreator } from '@/context/CreatorContext';
 import { StickyCTA } from '@/components/StickyCTA';
 import { toast } from 'sonner';
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6; // 0=Welcome, 1=Benefits, 2=PersonalInfo, 3=AboutMe, 4=Shipping, 5=SocialStats+Submit
 const COUNTRIES = ['United States', 'Canada', 'United Kingdom', 'Australia', 'France', 'Germany', 'Brazil', 'Mexico', 'India', 'Japan'];
 
 const CONTENT_NICHES = [
@@ -64,34 +64,45 @@ const CONTENT_NICHES = [
   { label: 'Home Decor', icon: Sofa },
 ];
 
-const PRODUCT_CATEGORIES = ['Skincare', 'Makeup', 'Haircare', 'Supplements', 'Clothing', 'Accessories', 'Home', 'Food & Drink'];
+const RECOMMEND_TOPICS = [
+  { label: 'Books', icon: BookOpen },
+  { label: 'Makeup', icon: Heart },
+  { label: 'Fashion', icon: Shirt },
+  { label: 'Fitness', icon: Dumbbell },
+  { label: 'Cooking', icon: UtensilsCrossed },
+  { label: 'Home Decor', icon: Sofa },
+  { label: 'Travel', icon: Plane },
+  { label: 'Pets', icon: PawPrint },
+  { label: 'Tech', icon: Smartphone },
+  { label: 'Skincare', icon: Flower2 },
+  { label: 'Wellness', icon: Sun },
+  { label: 'Parenting', icon: Baby },
+];
 
-interface PostEntry {
-  id: string;
-  platform: string;
-  type: 'link' | 'image';
-  link: string;
-}
+const BRAND_LOGOS = [
+  { name: 'Sephora', x: 2, y: 6, opacity: 0.9 },
+  { name: 'Nike', x: 55, y: 3, opacity: 0.85 },
+  { name: 'GAP', x: 8, y: 30, opacity: 0.7 },
+  { name: 'Target', x: 52, y: 28, opacity: 0.8 },
+  { name: 'Lululemon', x: 72, y: 18, opacity: 0.65 },
+  { name: 'Etsy', x: 60, y: 52, opacity: 0.75 },
+  { name: 'Skims', x: 35, y: 62, opacity: 0.7 },
+  { name: 'Revolve', x: 5, y: 58, opacity: 0.6 },
+  { name: 'Free People', x: 68, y: 68, opacity: 0.55 },
+  { name: 'TripAdvisor', x: 30, y: 10, opacity: 0.65 },
+];
 
 export default function ApplyPage() {
   const { creatorStatus, submitApplication } = useCreator();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(0);
-  // Pre-populate from invitation email (simulated for prototype)
   const [name, setName] = useState('Sarah Johnson');
   const [email, setEmail] = useState('sarah.johnson@email.com');
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [aboutMe, setAboutMe] = useState('');
+  const [recommendTopics, setRecommendTopics] = useState<string[]>([]);
 
-  // Start with 3 post slots as requested
-  const [posts, setPosts] = useState<PostEntry[]>([
-    { id: '1', platform: 'tiktok', type: 'link', link: '' },
-    { id: '2', platform: 'instagram_reel', type: 'link', link: '' },
-    { id: '3', platform: 'instagram_carousel', type: 'link', link: '' },
-  ]);
-
-  // Scroll to top whenever step changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [step]);
@@ -104,24 +115,8 @@ export default function ApplyPage() {
     setter(list.includes(item) ? list.filter((i) => i !== item) : [...list, item]);
   }
 
-  function addPost() {
-    setPosts((prev) => [
-      ...prev,
-      { id: Date.now().toString(), platform: 'tiktok', type: 'link', link: '' },
-    ]);
-  }
-
-  function removePost(id: string) {
-    if (posts.length <= 1) return;
-    setPosts((prev) => prev.filter((p) => p.id !== id));
-  }
-
-  function updatePost(id: string, field: keyof PostEntry, value: string) {
-    setPosts((prev) => prev.map((p) => (p.id === id ? { ...p, [field]: value } : p)));
-  }
-
   function handleNext() {
-    if (step === 1 && (!name.trim() || !email.trim())) {
+    if (step === 2 && (!name.trim() || !email.trim())) {
       toast.error('Please fill in your name and email.');
       return;
     }
@@ -134,66 +129,70 @@ export default function ApplyPage() {
     navigate('/');
   }
 
-  const progressSteps = ['About You', 'Address', 'Social Stats', 'Past Posts'];
-  const currentStepIndex = step - 1; // step 0 is welcome, so step 1 = index 0
+  const progressSteps = ['Benefits', 'About You', 'Your Style', 'Address', 'Social Stats'];
+  const currentStepIndex = step - 1;
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 pb-8">
-      {/* Improved Step Progress Indicator */}
-      {step > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-1 mb-2">
-            {progressSteps.map((_, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center">
-                <div
-                  className={`h-1.5 w-full rounded-full transition-colors duration-300 ${
-                    i < currentStepIndex
-                      ? 'bg-primary'
-                      : i === currentStepIndex
-                      ? 'bg-primary'
-                      : 'bg-muted'
-                  }`}
-                />
-              </div>
-            ))}
+    <>
+      {step === 0 ? (
+        <div key={step} className="animate-in fade-in-0 duration-500">
+          <WelcomeStep />
+        </div>
+      ) : (
+        <div className="max-w-lg mx-auto px-4 py-6 pb-8">
+          {/* Progress Indicator */}
+          <div className="mb-6">
+            <div className="flex items-center gap-1 mb-2">
+              {progressSteps.map((_, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center">
+                  <div
+                    className={`h-1.5 w-full rounded-full transition-colors duration-300 ${
+                      i < currentStepIndex
+                        ? 'bg-primary'
+                        : i === currentStepIndex
+                        ? 'bg-primary'
+                        : 'bg-muted'
+                    }`}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-primary">
+                Step {step} of {TOTAL_STEPS - 1}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {progressSteps[currentStepIndex]}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-medium text-primary">
-              Step {step} of {TOTAL_STEPS - 1}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {progressSteps[currentStepIndex]}
-            </p>
+
+          {/* Step content */}
+          <div key={step} className="animate-in fade-in-0 slide-in-from-right-4 duration-300">
+            {step === 1 && <BenefitsStep />}
+            {step === 2 && (
+              <PersonalInfoStep
+                name={name}
+                setName={setName}
+                email={email}
+                setEmail={setEmail}
+                selectedNiches={selectedNiches}
+                toggleNiche={(n) => toggleItem(selectedNiches, n, setSelectedNiches)}
+              />
+            )}
+            {step === 3 && (
+              <AboutMeStep
+                aboutMe={aboutMe}
+                setAboutMe={setAboutMe}
+                recommendTopics={recommendTopics}
+                toggleTopic={(t) => toggleItem(recommendTopics, t, setRecommendTopics)}
+              />
+            )}
+            {step === 4 && <ShippingStep />}
+            {step === 5 && <SocialStatsStep />}
           </div>
         </div>
       )}
-
-      {/* Step content with animation */}
-      <div key={step} className="animate-in fade-in-0 slide-in-from-right-4 duration-300">
-        {step === 0 && <WelcomeStep />}
-        {step === 1 && (
-          <PersonalInfoStep
-            name={name}
-            setName={setName}
-            email={email}
-            setEmail={setEmail}
-            selectedNiches={selectedNiches}
-            toggleNiche={(n) => toggleItem(selectedNiches, n, setSelectedNiches)}
-            selectedCategories={selectedCategories}
-            toggleCategory={(c) => toggleItem(selectedCategories, c, setSelectedCategories)}
-          />
-        )}
-        {step === 2 && <ShippingStep />}
-        {step === 3 && <SocialStatsStep />}
-        {step === 4 && (
-          <PastPostsStep
-            posts={posts}
-            addPost={addPost}
-            removePost={removePost}
-            updatePost={updatePost}
-          />
-        )}
-      </div>
 
       {/* Navigation */}
       <StickyCTA>
@@ -221,56 +220,121 @@ export default function ApplyPage() {
           </p>
         )}
       </StickyCTA>
+    </>
+  );
+}
+
+/* ─── Step 0: Luxe Welcome with Floating Brand Logos ─── */
+function WelcomeStep() {
+  return (
+    <div className="relative min-h-[calc(100vh-140px)] flex flex-col items-center justify-center overflow-hidden">
+      {/* Gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#8B6BFA] via-[#C084FC] via-60% to-[#FF8A5C]" />
+
+      {/* Subtle radial overlay for depth */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.15)_0%,transparent_60%)]" />
+
+      {/* Floating brand logo cards */}
+      <div className="absolute inset-0 pointer-events-none">
+        {BRAND_LOGOS.map((brand, i) => (
+          <div
+            key={brand.name}
+            className={`absolute luxe-float-${(i % 4) + 1}`}
+            style={{
+              left: `${brand.x}%`,
+              top: `${brand.y}%`,
+              opacity: brand.opacity,
+              animationDelay: `${i * 0.6}s`,
+            }}
+          >
+            <div className="backdrop-blur-md bg-white/20 border border-white/30 rounded-2xl px-4 py-2.5 shadow-lg">
+              <span className="text-white font-semibold text-xs tracking-wide whitespace-nowrap">{brand.name}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Center content */}
+      <div className="relative z-10 text-center px-6 space-y-5">
+        <Badge variant="secondary" className="bg-white/20 text-white border-white/30 backdrop-blur-sm text-xs gap-1.5 px-3 py-1">
+          <Crown className="w-3 h-3" />
+          By Invitation Only
+        </Badge>
+
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold text-white tracking-tight leading-tight">
+            You've Been<br />Invited
+          </h1>
+          <p className="text-white/75 text-sm max-w-[260px] mx-auto leading-relaxed">
+            Join a select group of creators with early access to brand campaigns
+          </p>
+        </div>
+
+        <div className="pt-2">
+          <p className="text-white font-bold text-2xl tracking-tight">30K+</p>
+          <p className="text-white/80 text-xs font-medium uppercase tracking-widest">Brand Partners Unlocked</p>
+        </div>
+      </div>
     </div>
   );
 }
 
-/* ─── Step 0: VIP Welcome ─── */
-function WelcomeStep() {
+/* ─── Step 1: Benefits — What is Benable Creator Program ─── */
+function BenefitsStep() {
   return (
-    <div className="text-center space-y-4 py-4">
-      <div className="welcome-icon icon-container inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10">
-        <Sparkles className="w-7 h-7 text-primary" />
-      </div>
-      <div>
-        <Badge variant="secondary" className="text-xs mb-2 gap-1">
-          <Crown className="w-3 h-3" />
-          By Invitation Only
-        </Badge>
-        <h1 className="text-2xl font-bold tracking-tight">You've Been Invited</h1>
-        <p className="text-muted-foreground mt-1.5 text-sm max-w-xs mx-auto">
-          Join a select group of creators with priority access to brand campaigns
-          as part of Benable's first creator program.
+    <div className="space-y-4 py-2">
+      <div className="text-center mb-5">
+        <div className="welcome-icon icon-container inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary/10 mb-3">
+          <Sparkles className="w-6 h-6 text-primary" />
+        </div>
+        <h2 className="text-xl font-bold tracking-tight">The Benable Creator Program</h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Here's what you get as a Benable creator
         </p>
       </div>
-      <div className="text-left max-w-xs mx-auto space-y-3">
+      <div className="space-y-3">
         {[
-          { icon: Crown, text: 'Priority access to paid brand campaigns' },
-          { icon: Globe, text: 'Work with top beauty, lifestyle & wellness brands' },
-          { icon: Sparkles, text: 'Free products or gift cards + compensation for every campaign' },
+          {
+            icon: Crown,
+            title: 'Priority Access',
+            text: 'Get first access to paid brand campaigns before anyone else',
+          },
+          {
+            icon: Globe,
+            title: 'Top Brands',
+            text: 'Work with beauty, lifestyle, wellness and fashion brands you love',
+          },
+          {
+            icon: Gift,
+            title: 'Free Products + Compensation',
+            text: 'Receive free products or gift cards plus payment for every campaign',
+          },
         ].map((item, i) => (
-          <div key={i} className="flex items-center gap-3">
-            <div className="icon-container w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <item.icon className="w-4 h-4 text-primary" />
-            </div>
-            <p className="text-sm">{item.text}</p>
-          </div>
+          <Card key={i}>
+            <CardContent className="flex items-start gap-3 py-4 px-4">
+              <div className="icon-container w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <item.icon className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm">{item.title}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">{item.text}</p>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </div>
   );
 }
 
-/* ─── Step 1: Personal Info (no Availability) ─── */
+/* ─── Step 2: Personal Info ─── */
 function PersonalInfoStep({
   name, setName, email, setEmail,
   selectedNiches, toggleNiche,
-  selectedCategories, toggleCategory,
 }: {
   name: string; setName: (v: string) => void;
   email: string; setEmail: (v: string) => void;
   selectedNiches: string[]; toggleNiche: (n: string) => void;
-  selectedCategories: string[]; toggleCategory: (c: string) => void;
 }) {
   return (
     <div className="space-y-4">
@@ -334,23 +398,70 @@ function PersonalInfoStep({
           </div>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+/* ─── Step 3: About Me + I Love Recommending ─── */
+function AboutMeStep({
+  aboutMe,
+  setAboutMe,
+  recommendTopics,
+  toggleTopic,
+}: {
+  aboutMe: string;
+  setAboutMe: (v: string) => void;
+  recommendTopics: string[];
+  toggleTopic: (t: string) => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <User className="w-4 h-4 text-primary" />
+            About Me
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Textarea
+            placeholder="Stylist living and working in New York City with a casual flair, creating standout looks and sharing coveted fashion tips that set trends and inspire."
+            value={aboutMe}
+            onChange={(e) => setAboutMe(e.target.value)}
+            className="min-h-24 text-sm"
+          />
+          <p className="text-[10px] text-muted-foreground mt-1.5">
+            Tell brands a bit about who you are and what you create
+          </p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Preferred Product Categories</CardTitle>
-          <p className="text-xs text-muted-foreground">What products do you love working with?</p>
+          <CardTitle className="text-base">I love recommending</CardTitle>
+          <p className="text-xs text-muted-foreground">Select all that apply</p>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-2">
-            {PRODUCT_CATEGORIES.map((cat) => (
-              <label key={cat} className="flex items-center gap-2 text-sm cursor-pointer">
-                <Checkbox
-                  checked={selectedCategories.includes(cat)}
-                  onCheckedChange={() => toggleCategory(cat)}
-                />
-                {cat}
-              </label>
-            ))}
+          <div className="flex flex-wrap gap-2">
+            {RECOMMEND_TOPICS.map((topic) => {
+              const TopicIcon = topic.icon;
+              const isSelected = recommendTopics.includes(topic.label);
+              return (
+                <button
+                  key={topic.label}
+                  type="button"
+                  onClick={() => toggleTopic(topic.label)}
+                  className={`flex items-center gap-1.5 text-sm rounded-full border px-3.5 py-2 transition-all ${
+                    isSelected
+                      ? 'border-primary bg-primary/10 text-primary font-medium shadow-sm'
+                      : 'border-border hover:border-primary/30 hover:bg-muted/50'
+                  }`}
+                >
+                  <TopicIcon className={`w-3.5 h-3.5 ${isSelected ? 'text-primary' : 'text-muted-foreground'}`} />
+                  {topic.label}
+                </button>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
@@ -358,7 +469,7 @@ function PersonalInfoStep({
   );
 }
 
-/* ─── Step 2: Shipping ─── */
+/* ─── Step 4: Shipping ─── */
 function ShippingStep() {
   return (
     <Card>
@@ -415,7 +526,7 @@ function ShippingStep() {
   );
 }
 
-/* ─── Step 3: Social Stats (Accordion Drawers) ─── */
+/* ─── Step 5: Social Stats ─── */
 function SocialStatsStep() {
   const [tiktokOpen, setTiktokOpen] = useState(false);
   const [igOpen, setIgOpen] = useState(false);
@@ -509,119 +620,6 @@ function SocialStatsStep() {
           </CollapsibleContent>
         </Card>
       </Collapsible>
-    </div>
-  );
-}
-
-/* ─── Step 4: Past Posts (3+, link or image upload) — flat list, no double cards ─── */
-function PastPostsStep({
-  posts,
-  addPost,
-  removePost,
-  updatePost,
-}: {
-  posts: PostEntry[];
-  addPost: () => void;
-  removePost: (id: string) => void;
-  updatePost: (id: string, field: keyof PostEntry, value: string) => void;
-}) {
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <LinkIcon className="w-4 h-4 text-primary" />
-        <h2 className="text-base font-semibold">Past Posts</h2>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        Share 3+ of your best posts. Include a mix of formats to show range.
-        We'll pull engagement stats from each link.
-      </p>
-
-      {posts.map((post, idx) => (
-        <div key={post.id} className="space-y-2">
-          {/* Row: number label + platform select + remove */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-muted-foreground w-5 shrink-0">{idx + 1}.</span>
-            <Select value={post.platform} onValueChange={(v) => updatePost(post.id, 'platform', v)}>
-              <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="tiktok">TikTok</SelectItem>
-                <SelectItem value="instagram_reel">IG Reel</SelectItem>
-                <SelectItem value="instagram_carousel">IG Carousel</SelectItem>
-                <SelectItem value="instagram_story">IG Story</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="flex-1" />
-            {posts.length > 1 && (
-              <button type="button" onClick={() => removePost(post.id)} className="text-muted-foreground hover:text-destructive transition-colors">
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {/* Content input — link or image */}
-          {post.type === 'link' ? (
-            <div className="flex items-center gap-2 ml-7">
-              <Input
-                placeholder="Paste link..."
-                value={post.link}
-                onChange={(e) => updatePost(post.id, 'link', e.target.value)}
-                className="h-8 text-sm flex-1"
-              />
-              <button
-                type="button"
-                onClick={() => updatePost(post.id, 'type', 'image')}
-                className="text-[10px] text-primary hover:underline whitespace-nowrap shrink-0"
-              >
-                Upload instead
-              </button>
-            </div>
-          ) : (
-            <div className="ml-7 flex items-center gap-2">
-              <div className="flex-1 border-2 border-dashed rounded-lg px-3 py-2 text-center cursor-pointer hover:bg-muted/50 transition-colors">
-                <div className="flex items-center justify-center gap-2">
-                  <Image className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Click to upload screenshot</span>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => updatePost(post.id, 'type', 'link')}
-                className="text-[10px] text-primary hover:underline whitespace-nowrap shrink-0"
-              >
-                Paste link
-              </button>
-            </div>
-          )}
-
-          {/* Link preview */}
-          {post.type === 'link' && post.link.trim() && (
-            <div className="ml-7 flex items-center gap-3 p-2.5 bg-muted rounded-lg">
-              <div className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
-                post.platform.includes('tiktok') ? 'bg-black' : 'bg-gradient-to-br from-purple-600 to-pink-500'
-              }`}>
-                <span className="text-white text-[9px] font-bold">
-                  {post.platform.includes('tiktok') ? 'TK' : 'IG'}
-                </span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-medium text-muted-foreground capitalize">{post.platform.replace(/_/g, ' ')}</p>
-                <p className="text-xs truncate">{post.link}</p>
-              </div>
-              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-            </div>
-          )}
-
-          {/* Divider between posts */}
-          {idx < posts.length - 1 && <div className="border-b ml-7" />}
-        </div>
-      ))}
-
-      {posts.length < 8 && (
-        <Button type="button" variant="outline" size="sm" className="w-full mt-2" onClick={addPost}>
-          <Plus className="w-4 h-4 mr-1" />
-          Add Another Post
-        </Button>
-      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
-export type ThemeName = 'default' | 'soft' | 'bold' | 'playful';
+export type ThemeName = 'soft' | 'luxe';
 
 interface ThemeContextType {
   theme: ThemeName;
@@ -8,22 +8,20 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'default',
+  theme: 'soft',
   setTheme: () => {},
 });
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<ThemeName>(() => {
-    return (localStorage.getItem('benable-theme') as ThemeName) || 'default';
+    const stored = localStorage.getItem('benable-theme');
+    const valid: ThemeName[] = ['soft', 'luxe'];
+    return valid.includes(stored as ThemeName) ? (stored as ThemeName) : 'soft';
   });
 
   useEffect(() => {
     localStorage.setItem('benable-theme', theme);
-    if (theme === 'default') {
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.documentElement.setAttribute('data-theme', theme);
-    }
+    document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
   return (

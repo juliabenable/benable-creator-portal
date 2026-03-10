@@ -573,11 +573,11 @@ function ProductPhaseStep({ campaign }: StepProps) {
               Choose Your Product
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-xs text-muted-foreground -mt-1">
-              {campaign.brandName} is offering you a choice. Select the one you'd like to feature.
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground -mt-1">
+              {campaign.brandName} is offering you a choice — pick the one you'd love to feature!
             </p>
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-3">
               {campaign.productOptions!.map((option) => {
                 const isSelected = selectedProductId === option.id;
                 return (
@@ -589,38 +589,52 @@ function ProductPhaseStep({ campaign }: StepProps) {
                       updateCampaignField(campaign.id, { selectedProduct: option.id });
                       toast.success(`Selected: ${option.name}`);
                     }}
-                    className={`w-full text-left rounded-lg border-2 p-4 transition-all ${
+                    className={`relative text-left rounded-xl border-2 overflow-hidden transition-all ${
                       isSelected
-                        ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
-                        : 'border-border hover:border-primary/40 hover:bg-muted/50'
+                        ? 'border-primary ring-2 ring-primary/30 shadow-lg shadow-primary/10'
+                        : 'border-border hover:border-primary/40 hover:shadow-md'
                     }`}
                   >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
-                          isSelected ? 'border-primary bg-primary' : 'border-muted-foreground/30'
-                        }`}
-                      >
-                        {isSelected && <Check className="w-3 h-3 text-white" />}
+                    {/* Product Image */}
+                    <div className="aspect-square w-full bg-muted overflow-hidden">
+                      {option.imageUrl ? (
+                        <img
+                          src={option.imageUrl}
+                          alt={option.name}
+                          className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Package className="w-10 h-10 text-muted-foreground/40" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Selection indicator overlay */}
+                    {isSelected && (
+                      <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-primary flex items-center justify-center shadow-md">
+                        <Check className="w-3.5 h-3.5 text-white" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-semibold ${isSelected ? 'text-primary' : ''}`}>
-                          {option.name}
-                        </p>
-                        {option.description && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{option.description}</p>
-                        )}
-                      </div>
+                    )}
+
+                    {/* Product Info */}
+                    <div className="p-3">
+                      <p className={`text-sm font-semibold leading-tight ${isSelected ? 'text-primary' : ''}`}>
+                        {option.name}
+                      </p>
+                      {option.description && (
+                        <p className="text-[11px] text-muted-foreground mt-1 leading-snug line-clamp-2">{option.description}</p>
+                      )}
                     </div>
                   </button>
                 );
               })}
             </div>
             {selectedProductId && (
-              <div className="flex items-center gap-2 text-sm text-primary">
-                <CheckCircle2 className="w-4 h-4" />
+              <div className="flex items-center gap-2 text-sm text-primary bg-primary/5 rounded-lg p-2.5">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
                 <span className="font-medium">
-                  Product selected: {campaign.productOptions!.find((o) => o.id === selectedProductId)?.name}
+                  You chose: {campaign.productOptions!.find((o) => o.id === selectedProductId)?.name}
                 </span>
               </div>
             )}
@@ -715,15 +729,15 @@ function ProductPhaseStep({ campaign }: StepProps) {
         </CardContent>
       </Card>
 
-      {/* Product Code + Checkout Instructions */}
+      {/* Gift Card + Checkout Instructions */}
       <Card className={!productChosen ? 'opacity-50 pointer-events-none' : ''}>
         <CardHeader className="pb-1">
           <CardTitle className="text-base flex items-center gap-2">
             <Gift className="w-4 h-4 text-primary" />
-            Your Product Code
+            Your Gift Card
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Use your product code at checkout. Add products to your cart, enter the code in the promo/gift code field, and complete your order.
+            Use your gift card at checkout. Add products to your cart, enter the code in the gift card field, and complete your order.
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
